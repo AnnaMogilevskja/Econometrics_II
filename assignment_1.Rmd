@@ -1,0 +1,161 @@
+---
+title: "Econometrics II - Assignment 1"
+author: "Uncensored sloths"
+date: "07 January 2022"
+output:
+  pdf_document:
+    includes:
+      in_header: "preamble.tex"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(lmtest)
+library(sampleSelection)
+library(fixest)
+library(dplyr) 
+library(quantreg)
+```
+
+# Question 1
+
+a) 
+```{r}
+# Load data
+data <- read.csv("assignment1a.csv")
+```
+
+```{r}
+model1 <- lm(logwage ~ schooling + age + agesq, data = data)
+summary(model1)
+```
+
+ADD TEXT
+
+b) Slide 14: OLS estimates are only consistent if we have random sample. However, if it is not random, then OLS estimates are not consistent. 
+Self selection of unemployed: either they do not want to work or they do not have any access to the job market
+When sample is not random the OLS estimator is not consistent. 
+However, as we do not have any data on wages of unemployed but we aim to gain insight on the potential earnings of unemployed people. The question is why they are not employed and these reasons might influence the potential earnings as well. F.e. people with low educational levels might be unemployed but if they were employed they would earn less than the people who are already employed. Hence, we need a sample selection model. 
+
+So we need to find characteristics that determine employment. 
+
+Married: in a marriage often one partner stays at home - usually a person who would potentially earn less
+age: younger people are often supported by parents and very old people often do not work anymore - which is why we also need to include age squared
+
+in Z we include everything and in x we exclude marriage as marriage affects employment but not necessarily the wage 
+OLS is not consistent as we assume that our sample is not random (so the error terms correlate) and X and Z are not correlated as we include (aside from one variable) the samme variables in both models.
+
+c) in Z we include everything and in x we exclude marriage as marriage affects employment but not necessarily the wage 
+
+```{r}
+data$work = ifelse(is.na(data$logwage), 0, 1)
+```
+
+```{r}
+heck1 = heckit(work ~ age + agesq + married + schooling + distance + subsidy,
+               logwage ~ age + agesq + married+ schooling + distance + subsidy, data=data)
+
+heck2 = heckit(work ~ age + agesq + married + schooling + distance + subsidy,
+               logwage ~ age + agesq + schooling + distance + subsidy, data=data)
+
+summary(heck1)
+summary(heck2)
+```
+```{r}
+ml1 = selection(work ~ age + agesq + married + schooling + distance + subsidy,
+               logwage ~ age + agesq + married+ schooling + distance + subsidy, data=data)
+
+ml2 = selection(work ~ age + agesq + married + schooling + distance + subsidy,
+               logwage ~ age + agesq + schooling + distance + subsidy, data=data)
+
+summary(ml1)
+summary(ml2)
+```
+d) Estimate shape, distribution and expectation 
+
+Question 2
+
+a) 
+```{r}
+model2 <- lm(logwage ~ schooling, data = data)
+model3 <- lm(logwage ~ schooling + age + agesq + married, data = data)
+summary(model2)
+summary(model3)
+```
+b)
+
+```{r}
+IV1 <- feols(logwage ~ 1 | schooling ~ distance, data, se = 'hetero')
+IV2 <- feols(logwage ~ 1 | schooling ~ subsidy, data, se = 'hetero')
+IV3 <- feols(logwage ~ 1 | schooling ~ distance + subsidy, data, se = 'hetero')
+summary(IV1)
+summary(IV2)
+summary(IV3)
+```
+Subsidy appears to be an adequate instrument as the F Test is higher 10. Distance on the other side has a F test lower 10. Moreover, the Sargan Test cannot reject H0, which supports evidence that one of the instruments is not valid - probably distance.
+
+c) 
+H0 for Hausmann (slide 24) can be rejected. Hence, x is endoegnous and we need instrumental variables. We prefer OLS when instruments are very weak as IV estimation is biased.
+Also, OLS is not significant while 
+```{r}
+summary(model1)
+summary(model2)
+summary(IV2)
+```
+```{r}
+IV4 <- feols(logwage ~ age + agesq | schooling ~ subsidy, data, se = 'hetero')
+
+IV5 <- feols(logwage ~ age + agesq | schooling ~ distance, data, se = 'hetero')
+
+IV6 <- feols(logwage ~ age + agesq | schooling ~ distance + subsidy, data, se = 'hetero')
+summary(IV4)
+summary(IV5)
+summary(IV6)
+```
+
+```{r}
+IV7 <- feols(logwage ~ age + agesq + married| schooling ~ subsidy, data, se = 'hetero')
+
+IV8 <- feols(logwage ~ age + agesq + married| schooling ~ distance, data, se = 'hetero')
+
+IV9 <- feols(logwage ~ age + agesq + married| schooling ~ distance + subsidy, data, se = 'hetero')
+summary(IV7)
+summary(IV8)
+summary(IV9)
+```
+
+
+# Question 3
+a)
+```{r}
+# Load data
+data2 <- read.csv("assignment1b.csv")
+```
+
+```{r}
+#index1 <- which(abs)
+#plot(data2$lntotexp)
+#abline(v = quantile(data2$lntotexp), col="red", lwd=3, lty=2)
+qqplot(data2$lntotexp, data)
+```
+
+b)
+
+```{r}
+ols <-lm(lntotexp~ totchr + suppins + age + female + white, data = data2)
+qr <- rq(lntotexp~ totchr + suppins + age + female + white, data = data2, tau = c(0.1, 0.25, 0.5, 0.75, 0.9))
+summary(ols)
+summary(qr)
+```
+
+
+c)
+
+```{r}
+qr2 <- rq(lntotexp~ totchr + suppins + age + female + white, data = data2,  tau = seq(0.05, 0.95, by = 0.05))
+```
+
+```{r}
+plot(summary(qr2))
+```
+
