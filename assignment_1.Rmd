@@ -15,37 +15,64 @@ library(sampleSelection)
 library(fixest)
 library(dplyr) 
 library(quantreg)
+library(stargazer)
 ```
 
 # Question 1
 
-a) 
+a) Run an OLS regression for log-earnings on schooling, age, and age squared. Present the
+results and comment on the estimates.\\
+
 ```{r}
 # Load data
 data <- read.csv("assignment1a.csv")
 ```
 
 ```{r}
+# Run regression
 model1 <- lm(logwage ~ schooling + age + agesq, data = data)
-summary(model1)
+stargazer(model1)
 ```
 
-ADD TEXT
+As the results of the regression show the estimate for schooling is highly significant and positive which means an additional year of school increases the log wage by around 0.22. The estimates for age and age squared are negative which means the older an individual is the lower the log wage. However, both estimates are not significant.\\
 
-b) Slide 14: OLS estimates are only consistent if we have random sample. However, if it is not random, then OLS estimates are not consistent. 
-Self selection of unemployed: either they do not want to work or they do not have any access to the job market
-When sample is not random the OLS estimator is not consistent. 
-However, as we do not have any data on wages of unemployed but we aim to gain insight on the potential earnings of unemployed people. The question is why they are not employed and these reasons might influence the potential earnings as well. F.e. people with low educational levels might be unemployed but if they were employed they would earn less than the people who are already employed. Hence, we need a sample selection model. 
+b) Briefly discuss the sample selection problem that may arise in using these OLS estimates
+for the purpose of predicting the potential earnings of the non-employed. Formulate the
+sample selection model. In your answer, include an explanation why OLS may fail in this
+context.\\
 
-So we need to find characteristics that determine employment. 
+The researcher's aim is to gain insight on the potential earnings of unemployed people. However, there is the possibility of self selection of unemployed individuals. Reasons for self selection might be either the unwillingness to work or an inaccessibility to the job market, and both of these aspects may relate to certain characteristics of the individuals.\\
+To be clear, we do not exactly know why these individuals are unemployed and whether these reasons could have an effect on their earnings if they worked. If for instance the reason why they do not work is due inaccessibility to the job market as a result of a low education level, we can assume that in case of employment they would have a lower wage than individuals who are already employed. However, if certain characteristics determine the self selection into unemployment, the sample is non-random. Consequently, the OLS estimates would be inconsistent.\\
 
-Married: in a marriage often one partner stays at home - usually a person who would potentially earn less
-age: younger people are often supported by parents and very old people often do not work anymore - which is why we also need to include age squared
+A sample selection model helps to address the issue of self selection. Therefore, we need to formulate an indicator and a regression function. In our case, the indicator function ($I_i^* = Z_i\prime \gamma + V_i$) depicts the decision of the individual whether to work or not:
 
-in Z we include everything and in x we exclude marriage as marriage affects employment but not necessarily the wage 
-OLS is not consistent as we assume that our sample is not random (so the error terms correlate) and X and Z are not correlated as we include (aside from one variable) the samme variables in both models.
+$$
+I_i^* = \begin{cases}
+            1 & \text{(employed)} & \text{if} \space I_i^* > 0\\
+            0 & \text{(unemployed)} & \text{if} \space I_i^* \leq 0
+        \end{cases}
+$$
+The regression function depicts the log wage, but only for individuals who decide to work:
 
-c) in Z we include everything and in x we exclude marriage as marriage affects employment but not necessarily the wage 
+$$
+Y_i^* = X_i\prime \beta + U_i
+$$
+
+$$
+Y_i^* = \begin{cases}
+            Y_i^* & \text{if} \space I_i^* = 1\\
+            missing & \text{if} \space I_i^* = 0
+        \end{cases}
+$$
+So we need to find characteristics that determine employment. For the indicator regression, we would include any schooling, age, age squared, marriage, subsidy and distance as they all could have potential impact on the employment decision. Schooling, subsidy and distance have an impact on the educational level of individuals. The higher the educational level, the better are their chance of employment. Age also determines employment as usually very young an old individuals do not work. However, as this is obviously not a linear relationship, we need to include the squared age to account for the non-linearity. Marriage is included as couples, especially in traditional settings, tend to divide responsibilities between each other which often can result in one partner only working while the other takes care of housework. For the regression function, we would exclude marriage as marriage affects employment but not the wage.\\
+
+However, the issue of the non-randomness of the sample still remains. Moreover, the independent variables of the indicator and regression functions are correlated (multicollinearity?). 
+
+c) Choose a suitable candidate as an exclusion restriction for the sample selection model.
+Motivate your choice. Estimate the sample selection model with the Heckman two-step
+estimator both with and without the exclusion restriction and compare the outcomes.\\
+
+As already elaborated in the previous subquestion, we use marriage as the exclusion restriction.Especially in traditional setting, when married, the partner who earns less often decides to stay unemployed and take responsibility for house work. However, marriage does not necessarily directly affect the amount individuals earn (although research shows that this is not necessarily the case for married men (Pollmann-Schult 2011; Chun and Lee 2001)).  
 
 ```{r}
 data$work = ifelse(is.na(data$logwage), 0, 1)
@@ -58,9 +85,28 @@ heck1 = heckit(work ~ age + agesq + married + schooling + distance + subsidy,
 heck2 = heckit(work ~ age + agesq + married + schooling + distance + subsidy,
                logwage ~ age + agesq + schooling + distance + subsidy, data=data)
 
-summary(heck1)
-summary(heck2)
+stargazer(heck1)
+stargazer(heck2)
 ```
+Comparing both models, we can see that for indicator function the estimates, their standard errors and t-values are the same. In this regression only marriage has a positive significant effect on the indicator which means that a married person is more likely to work. This is not on line with the narrative we proposed. However, a reason why married individuals are more likely to work is that they bear a higher social responsibility for the overall household while singles generally only have to take care of a one-person household.\\
+
+For the outcome equation, schooling is positive and significant for the estimation where we exclude marriage in the outcome equation, indicating that an additional school year increases the log wage by approximately 0.19. In the other estimation, where we include marriage in the outcome equation, no estimator is significant (except for the intercept). Furthermore, no values for the standard error, t value and p value were estimated in case of the marriage estimator.\\
+
+As all other estimators are not significant, we should estimate another selection model where we include only the significant estimators in the next step. (COMMENT: if we exclude age and agesq then schooling becomes insignificant)!\\
+
+```{r}
+heck3 = heckit(work ~ age + agesq + married + schooling,
+               logwage ~ age + agesq + married + schooling, data=data)
+
+heck4 = heckit(work ~ married  + schooling,
+               logwage ~ age + agesq + schooling, data=data)
+
+stargazer(heck3)
+stargazer(heck4)
+```
+
+
+d)
 ```{r}
 ml1 = selection(work ~ age + agesq + married + schooling + distance + subsidy,
                logwage ~ age + agesq + married+ schooling + distance + subsidy, data=data)
@@ -68,11 +114,76 @@ ml1 = selection(work ~ age + agesq + married + schooling + distance + subsidy,
 ml2 = selection(work ~ age + agesq + married + schooling + distance + subsidy,
                logwage ~ age + agesq + schooling + distance + subsidy, data=data)
 
-summary(ml1)
-summary(ml2)
+stargazer(ml1)
+stargazer(ml2)
 ```
-d) Estimate shape, distribution and expectation 
 
+When estimating the equations with the maximum likelihood method we can see that there are only minor differences between the estimation including and excluding the exclusion restriction.\\
+
+In both models, marriage is the only significant estimator in the probit selection equation while in the outcome equation, schooling is the only significant estimator, having a positive effect on log wage (an additional school year, increases log wage by around 0.19).\\ 
+
+WHY IS THIS THE CASE?
+
+e) Estimate shape, distribution and expectation 
+
+```{r}
+beta <- ml1$estimate[8:14]
+X <- cbind(1, data$age, data$agesq, data$married, data$schooling, data$distance, data$subsidy)
+sigma <- ml1$estimate[15]
+rho <- ml1$estimate[16]
+Z <- cbind(1, data$age, data$agesq, data$married, data$schooling, data$distance, data$subsidy)
+gamma <- ml1$estimate[1:7]
+Ystarhat = X %*% beta + rho * sigma * dnorm( Z %*% gamma ) / pnorm( -(Z %*% gamma) )
+datanew <- cbind(data, Ystarhat)
+```
+
+```{r}
+beta2 <- heck2$coefficients[8:13]
+sigma2 <- heck2$coefficients[15]
+rho2 <- heck2$coefficients[16]
+gamma2 <- heck2$coefficients[1:7]
+X2 <- cbind(1, data$age, data$agesq, data$schooling, data$distance, data$subsidy)
+Ystarhat2 = X2 %*% beta2 + rho2 * sigma2 * dnorm( Z %*% gamma2 ) / pnorm( -(Z %*% gamma2) )
+datanew <- cbind(datanew, Ystarhat2)
+```
+
+```{r}
+model2 <- lm(logwage ~ age + agesq + married + schooling + distance + subsidy, data = data)
+beta3 <- model2$coefficients
+Ystarhat3 = X %*% beta3
+datanew <- cbind(datanew, Ystarhat3)
+```
+
+```{r}
+# Plot histogramms for conditional expected log wages of unemployed individuals
+
+df <- datanew %>% filter_at(vars(logwage),all_vars(is.na(.)))
+
+hist(datanew$Ystarhat, col=rgb(1,0,0,0.5))
+
+hist(datanew$Ystarhat2, col=rgb(0,0,1,0.5), add=T)
+
+hist(datanew$Ystarhat3, col=rgb(0,1,0,0.5),add=T)
+
+# Add legend
+legend("topright", legend=c("ML","Heckmann", "OLS"), col=c(rgb(1,0,0,0.5), 
+     rgb(0,0,1,0.5), rgb(0,1,0,0.5)), pt.cex=2, pch=15 )
+```
+```{r}
+par(
+  mfrow=c(1,3),
+  mar=c(4,4,1,0)
+)
+
+hist(datanew$Ystarhat, col=rgb(1,0,0,0.5),xlab="Ystarhat", main="ML" )
+
+hist(datanew$Ystarhat2, col=rgb(0,0,1,0.5),xlab="Ystarhat2", main="Hackmann" )
+
+hist(datanew$Ystarhat3, col=rgb(0,1,0,0.5),xlab="Ystarhat3", main="OLS" )
+```
+ Nikki schreib mal was
+ 
+ 
 Question 2
 
 a) 
