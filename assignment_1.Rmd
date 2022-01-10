@@ -113,19 +113,9 @@ Y_i=X_i^\prime\beta+\rho\sigma\frac{\phi(Z_i^\prime \hat\gamma)}{\Phi(Z_i^\prime
 $$
 The described identification problem is resolved by means of the exclusion restriction adopted in the model above, in which the variable marriage is excluded from $X_i$. Hence, only this Heckit model is considered for subseding analysis.\\
 
+The fact that all other regressors, i.e. except schooling, are not significant in the model above prompts considerations of model selection which are disregarded here since they lay outside the methodologically concerned scope of this assignment. More specifically, more parsimonious specifications of the (2nd step) regression equation could be considered.\\
+
 As all other estimators are not significant, we should estimate another selection model where we include only the significant estimators in the next step. (COMMENT: if we exclude age and agesq then schooling becomes insignificant)!\\
-
-```{r}
-heck3 = heckit(work ~ age + agesq + married + schooling,
-               logwage ~ age + agesq + married + schooling, data=data)
-
-heck4 = heckit(work ~ married  + schooling,
-               logwage ~ age + agesq + schooling, data=data)
-
-stargazer(heck3)
-stargazer(heck4)
-```
-
 
 d) Estimate the sample selection model with maximum likelihood both with and without the
 exclusion restriction and compare the outcomes.
@@ -231,7 +221,11 @@ Question 2
 a)  Discuss the estimation of the causal effect of schooling on earnings by OLS. In particular, address whether or not it is plausible that regularity conditions for applying OLS are
 satisfied.\\
 
-Earnings usually depend on the educational level of individuals which is why it is sensible to estimate the causal effect of schooling on earnings. However, in order to get a unbiased, consistent and efficient OLS estimation the following regularity conditions have to hold:\\
+```{r}
+model3 <- lm(logwage ~ schooling, data = data)
+stargazer(model3)
+```
+Earnings usually depend on the educational level of individuals which is why it is sensible to theorize and estimate the causal effect of schooling on earnings. OLS estimation performed for all employed observed individuals suggests that this causal effect is not significant though. However, in order for OLS to yield unbiased, consistent and efficient estimation results the following regularity conditions need to hold:\\
 
 1. $x_i$ is stochastic and $plim(\frac{1}{n} X\prime X) = Q$ of rank k\\
 2. $\epsilon_i$ is random with $E(\epsilon_i|x_i) = 0$ (zero conditional mean)\\
@@ -241,7 +235,7 @@ Earnings usually depend on the educational level of individuals which is why it 
 6. $y_i = \alpha + \beta x_i + \epsilon_i$ (linear model)\\
 7. $\epsilon_i \sim N(0, \sigma^2 I)$\\
 
-So it is essential that $X_i$ is an exogenous regressor. The issue that can arise in the estimation of the causal effect of schooling on earnings is that schooling itself is an endogenous regressors. For instance, the distance to the school, the amount of financial support for schools, the educational background of the individual's parents are all potential determining factors of an individual's education. The distance is often regarded as a determining factor as individuals who live closer to a college or school tend to higher education. Subsidies for schools are meant to improve the educational quality of institutions which is why we can presume that students from highly subsidized school tend to study more and longer. Children whose parents have an academic background statistically study more often than children whose parents have a worker background. All these aspects support the argument that schooling actually is not an exogenous but an endogenous regressors. Consequently, the assumption of the zero conditional mean does not hold and the OLS estimation would be biased and inconsistent. 
+So it is essential that $X_i$ is an exogenous regressor. The issue that can arise in the estimation of the causal effect of schooling on earnings is that schooling itself is an endogenous regressors. For instance, the distance to the school, the amount of financial support for schools, the educational background of the individual's parents are all potential determining factors of an individual's education. The distance is often regarded as a determining factor as individuals who live closer to a college or school tend to attain higher education levels. Subsidies for schools are meant to improve the educational quality of institutions which is why one might presume that students from highly subsidized school tend to study more and longer. Moreover, children whose parents have an academic background statistically study more often than children whose parents have a non-academic background. All these aspects support the argument that schooling actually is not an exogenous but an endogenous regressors. Consequently, the assumption of the zero conditional mean does not hold and the OLS estimation can be assumed to be both biased and inconsistent. 
 
 b) Perform instrumental variables estimation for these three options. Which option do you
 prefer? Include in your answer the necessary analyses and numbers on which you base your
@@ -255,11 +249,15 @@ summary(IV1)
 summary(IV2)
 summary(IV3)
 ```
-For the first instrumental variable estimation, which considers distance as the only instrumental variable, we can see that the first-stage F-test gives us a F-statistic of around 5.65. As this is below 10, this gives us evidence that the instrument is not relevant which is why we will not consider it any further.\\
+For the first instrumental variable estimation, which considers distance as the only instrumental variable, we can see that the first-stage F-test yields a F-statistic of around 5.65. As this is below the customary threshold of 10, below which the IV estimator can be shown to possess (approximately) more than 10% of the OLS bias, this gives a clear indication that the instrument at hand is not relevant, which is why it will not be consider any further.\\
 
-The second instrumental variable estimation, which considers subsidy as the only instrumental variable, we can see that the first-stage F-test gives us a F-statstic of around 41.2. Hence, there is evidence that the instrument is relevant. Looking at the second-stage regression, we see that schooling is significant and as a positive effect on wage.\\
+The second instrumental variable estimation considers subsidy as the only instrumental variable and gives a F-statstic of around 41.2 in the first-stage regression. Hence, there is a strong indication that the instrument considered here is relevant and should be preferred over the instrument discussed before. This can also be seen by comparing the efficiency of the obtained estimators, i.e. of the coefficients' standard errors, since the loss in precision associated with IV estimation increases in the weakness of instruments.\\
 
-The third instrumental variable estimation includes distance and subsidy as its instrumental variables and has a F statistic of around 23. However, the Sargan test, which can be applied when the model is overidentified and tests the exogeneity of instruments, cannot reject the null hypothesis as the p-value is around 0.37. This aligns with our previous results as the Sargan test assumes that one of the instrumental variables is valid and tests whether the instrumental variables are jointly valid. Considering, that distance is not a relevant instrumental variable, it is not surprising that the Sargant test does not reject the null hypothesis.\\
+Analyzing the IV estimation results, when instrumented by the variable subsidy, we see that schooling has a significant and positive effect on wages. Hence, the results obtained here exemplify that inappropriate treatment of edogeneity problems can greatly affect the inferential conclusions drawn towards causal relationships studied.\\
+
+The third instrumental variable estimation includes distance and subsidy as instrumental variables and yields a F statistic of around 23. Since more instrumental variables than (potentially) endogenous variables are considered here,i.e. the model is overidentified, the Sargan test for instrument validity can be applied. Based on this test we cannot reject the null hypothesis of joint instrument exogeneity as it gives a p-value of around 0.37.\\
+
+This leaves the question whether using both variables as instrumental variables should be preferred over using only subsidy as such. Since the Sargan test only tests the joint validity of the instruments, it does not contradict the characterization of distance as a weak instrument. Since it can be shown that dropping weak instrumental variables, reduces the bias in the case of overidentification, we argue that adopting soley subsidy as an instrument is the most suitable model specification here.\\
 
 Hence, we would choose subsidy as the only instrumental variable for our estimation. \\
 
@@ -274,30 +272,29 @@ summary(IV5)
 summary(IV6)
 ```
 
-Going further, we also estimate instrumental variable estimations where we include age and squared age. Although the numbers change across the estimations, the estimations also show that distance is not a valid instrumental variable while subsidy is. Further, the Sargan test does not reject the null hypothesis in any of the estimations. Therefore, this supports our choice of subsidy as the instrumental variable.\\
+Going further, we also perform instrumental variable estimations where age and squared age are included as presumably exogenous regressors (i.e. instrumented by themselves). Although estimated values expectedly change across estimations, the obtained results yield the same conclusion that distance is not a valid instrumental variable while subsidy is. Therefore, we draw the equivalent conclusion that dropping distance as a weak instrument should be preferred to reduce the biasedness of the IV estimation.\\
 
 c) Compare the IV estimates with the OLS outcomes. Under which conditions would you
 prefer OLS over IV? Perform a test and use the outcome of the test to support your choice
 between OLS and IV. Motivate your choice.
 
 ```{r}
-model3 <- lm(logwage ~ schooling, data = data)
 stargazer(model1)
 stargazer(model3)
 summary(IV2)
 summary(IV4)
 ```
-Our first OLS model includes schooling, age and age squared as regressors. Schooling is highly significant and has a positive effect on earnings. Age and age squared have a negative effect on wages but are not significant. The F test is around 604.3 so the estimator are jointly significant. The adjuste $R^2$ is around 0.8135. 
+Our first OLS model includes schooling, age and age squared as regressors. Schooling is highly significant and has a positive effect on earnings. Age and age squared have a negative effect on wages but are not significant. The F test is around 604.3 so the estimator are jointly significant. The adjusted $R^2$ is around 0.8135. 
 
 The second OLS model include only schooling as a regressor. It has a positive effect on wages, although lower than in the other OLS estimation, and is not significant. In comparison to the previous OLS estimation, the $R^2$ is substantially lower at around 0.0023.
 
 Comparing these two models, the first OLS estimation seems more sensible as its explanatory power is substantially higher.\\
 
-The instrumental variable estimation that include schooling as the only regressors and subsidy as its instrumental variable has a F statistic of 41.2. Schooling has a positive effect on wages and is significant at 0.001. The Wu-Hausman test rejects the null hypothesis at 0.01. Hence, there is evidence for endogeneity of the regressor schooling. $R^2$ does not have any informative power in an instrumental variable estimation as it is only meaningful when the Gauss-Markov Theorem assumptions are satisfied which is why we do not consider it here any further. 
+The instrumental variable estimation that include schooling as the only regressors and subsidy as its instrumental variable has a F statistic of 41.2. Schooling has a positive effect on wages and is significant at 0.001. The Wu-Hausman test rejects the null hypothesis of exogeneity at 0.01. Hence, there is substantial evidence for endogeneity of the regressor schooling. $R^2$ does not have any informative power in an instrumental variable estimation as it is only meaningful when the Gauss-Markov Theorem assumptions are satisfied which is why we do not consider it here any further. 
 
 The last estimation includes schooling as its endogenous regressors with subsidy as its instrumental variable and age and age squared as its exogenous regressors. The F statistic is around 43.3, so slightly higher than in the previous estimation. Schooling is significant at 0.0001 and has a positive effect on wages, although lower than in the previous instrumental variable estimation. The Wu-Hausman test is not as significant as in the previous estimation but we are still able to reject the null hypothesis at 10%. \\
 
-Given our results, we would prefer the IV estimation as there is evidence for the endogeneity of schooling. Further, we would choose the estimation that also includes the exogenous regressors age and age squared as the F statistic is higher than in the estimation where we only included schooling.\\
+Given our results, we would prefer the IV estimation as there is evidence for the endogeneity of schooling. Further, we would choose the estimation that also includes the exogenous regressors age and age squared as the first-stage F statistic is higher than in the estimation where we only included schooling and analysis of the adjusted $R^2$ for OLS estimation indicates that the overall model fit can be thus considerably improved.\\
 
 
 # Question 3
@@ -319,7 +316,7 @@ ylab = "Sample Quantile")
 abline(v=c(0.1,0.5,0.9),col="blue")
 
 ```
-The graph plots every sample quantile for each sample fraction which is why we have the sample fraction on the x axis and the sample quantile on the y axis. Additionally, we added a vertical line at the 10th percentile, the median and the 90th percentile. As the data is ordered for the plot, it is not surprising that the sample quantiles are increasing monotonically. Between the 0th and 10th percentile, the sample quantiles increase exponentially. From te 10th until the 90th percentile, the sample quantile only increase from approximately 6 to 10. Afterwards, they increase exponentially until 12.\\
+The graph plots every sample quantile for each sample fraction which is why we have the sample fraction on the x axis and the sample quantile on the y axis. Additionally, we added a vertical line at the 10th percentile, the median and the 90th percentile. As the data is ordered for the plot, it is not surprising that the sample quantiles are increasing monotonically. Between the 0th and 10th percentile, the sample quantiles increase exponentially. From te 10th until the 90th percentile, the sample quantile only increase from approximately 6 to 10. Afterwards, they increase exponentially until 12. Hence, we find a clear indication of asymmetry, namely left-skewness, in the distribution of the considered variable of log medical expenditures. This makes intuitive sense if one presumes that there is some upper limit to total medical expenditures.\\
 
 b) Estimate the model for the quantiles $q = 0.1, 0.25, 0.5, 0.75\space \text{and} \space 0.9$. Briefly explain your result. Compare quantile regression results to OLS estimates.
 
@@ -328,6 +325,14 @@ ols <-lm(lntotexp~ totchr + suppins + age + female + white, data = data2)
 qr <- rq(lntotexp~ totchr + suppins + age + female + white, data = data2, tau = c(0.1, 0.25, 0.5, 0.75, 0.9))
 stargazer(ols)
 summary(qr)
+```
+Just as for variables such as wealth and earnings (with which medical expenditures might correlate to some degree), one can saliently assert that causal effects of considered factors determining the level of total medical expenditures are unstable across quantiles of the distribution of medical expenditures. This is exactly what the considered quantile regression results suggest for several regressors which do not only differ in the magnitude of estimated effects (e.g. that of the number of chronic problems) but also in their significance of effects (e.g. that of the existence of supplementary private insurance). Since discussion of these differences is greatly aided by the graphical presentation produced in c) further discussions of these findings are provided alongside below.\\
+
+These differences also manifest in the differences between quantile regression results and OLS estimates. By construction OLS estimates disregard any differences in effects across the distrubtion of the dependent variable and would only resemble quantile regression results if such differences would not exist. Thus, a more detailed discussion of the exact differences in parameter estimates seems little insightful. However, it may be noteworthy to point out the difference in OLS estimates, concerned with the conditional mean, to those of the 0.5 quantile, concerned with the conditional median. Clearly the difference in results is due to the left-skewness of the dependent variable data outlined above, namely that the median of the log of total medical expenditures is bigger than the mean.\\
+
+```{r}
+mean(data2$lntotexp)
+median(data2$lntotexp)
 ```
 
 ```{r}
@@ -363,7 +368,7 @@ ggp5 <- ggplot(data2, aes(white, lntotexp)) +
 
 grid.arrange(ggp1, ggp2, ggp3, ggp4, ggp5, ncol = 2) 
 ```
-
+Though plotting fitted values for quantile regression vs. OLS regression estimates for all considered regressors gains little insights into the discusssion above, plots are provided here to informally conclude that fitted quantiles do not cross.\\
 
 c) Graph the estimated coefficients from the quantile regressions for $q$from $0.05\space \text{to} \space 0.95$ in
 increments of $0.05$, together with their $95\%$ confidence interval and the corresponding estimates from a linear regression (and their $95%$ confidence interval). Discuss your findings.
@@ -375,4 +380,22 @@ qr2 <- rq(lntotexp~ totchr + suppins + age + female + white, data = data2,  tau 
 ```{r}
 plot(summary(qr2))
 ```
+The graphs show that the estimates for different quantiles differ across the quantiles and therefore do not align with the OLS estimator although the magnitude differs among the various regressors.\\
 
+The impact of the number of chronic problems is higher for lower sample fractions than estimated by OLS. It monotonically decreases for increasing sample fractions and is lower than estimated by OLS from around the 40th percentile on. As one would expect, this effect is estimated to be (very) significant and positive across the entire distribution. Chronic problems expectedly result in higher medical expenditures unconditional on whether general expenditures are high. To make sense of the fact that the estimated coeficient is decreasing in the considered percentile, we note that total medical expenditures are measured in logs so that they have to be interpreted as indicating the relative increase in expenditues associated with an increase in regressor variables. Hence, if expenditures are already very high, the effect of chronic medical problems is lower in relative terms.
+
+A similar dynamic can be observed for the supplementary private insurance. For lower sample fractions a supplementary private insurance has a higher positive effect on the total medical expenditures than for higher sample fractions. From the 80th percentile on the effect is even negative. Until around the 40th percentile the effect is higher than estimated by OLS. Moreover, the significance of the effect decreases in the considered percentile so that the effect is no longer sigificant from the 0.85 quantile onwards. The insignificance for higher percentiles can be explained by the fact that the impact of an increasing probability that individuals have a supplementary private insurance is lower when the probability is already high.
+
+In case of the regressor age, the OLS and quantile estimation align from the 30th to the 70th percentile. Most natably, the effect is not estimated to be efficient for the top 15 percentiles. This may be due to the fact that very high levels of medical expenditure are associated with very severe medical diseases whose costs are likely to be greatly invariant towards the individual's age.
+
+Along these lines, one could also make sense of the finding that being female only has a significant negative effect on medical expenditures for high percentiles if one assumes that costs associated with severe and thus costly diseases systemically differs across sex.
+
+Lastly, the quantile regression output suggests the variable white to have a significantly positive effect on medical expenditures for intermediate percentiles. In contrast to the other effects, it seems rather unintuitive to construct an argument for this notion and is left to an econometrician who is more familiar with the pecularities of systemic ethnic differences in the country considered here.
+
+# References
+
+Chun, H., & Lee, I. (2001). Why do married men earn more: Productivity or marriage selection?, Economic Inquiry, 39(2), 307-319.\\
+
+Greene, W. H. (2003). Econometric analysis. 5th edition, Pearson Education India.\\
+
+Pollmann-Schult, M. (2011). Marriage and Earnings: Why Do Married Men Earn More than Single Men?, European Sociological Review, Volume 27, Issue 2,April 2011, Pages 147–163.\\
