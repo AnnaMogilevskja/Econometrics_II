@@ -16,6 +16,8 @@ library(fixest)
 library(dplyr) 
 library(quantreg)
 library(stargazer)
+library(ggplot2)
+library(gridExtra)
 ```
 
 # Question 1
@@ -226,14 +228,24 @@ Comparison of the histograms obtained yields the conclusion that the distributio
  
 Question 2
 
-a) 
-```{r}
-model2 <- lm(logwage ~ schooling, data = data)
-model3 <- lm(logwage ~ schooling + age + agesq + married, data = data)
-summary(model2)
-summary(model3)
-```
-b)
+a)  Discuss the estimation of the causal effect of schooling on earnings by OLS. In particular, address whether or not it is plausible that regularity conditions for applying OLS are
+satisfied.\\
+
+Earnings usually depend on the educational level of individuals which is why it is sensible to estimate the causal effect of schooling on earnings. However, in order to get a unbiased, consistent and efficient OLS estimation the following regularity conditions have to hold:\\
+
+1. $x_i$ is stochastic and $plim(\frac{1}{n} X\prime X) = Q$ of rank k\\
+2. $\epsilon_i$ is random with $E(\epsilon_i|x_i) = 0$ (zero conditional mean)\\
+3. $E[\epsilon_i^2|x_i] = Var(\epsilon_i|x_i) = \sigma^2$ (homoskedasticity)\\
+4. $E[\epsilon_i, \epsilon_j] = 0$ for $i \neq j$ (no autocorrelation)\\
+5. $\alpha, \beta, \sigma^2$ are fixed and unknown.\\
+6. $y_i = \alpha + \beta x_i + \epsilon_i$ (linear model)\\
+7. $\epsilon_i \sim N(0, \sigma^2 I)$\\
+
+So it is essential that $X_i$ is an exogenous regressor. The issue that can arise in the estimation of the causal effect of schooling on earnings is that schooling itself is an endogenous regressors. For instance, the distance to the school, the amount of financial support for schools, the educational background of the individual's parents are all potential determining factors of an individual's education. The distance is often regarded as a determining factor as individuals who live closer to a college or school tend to higher education. Subsidies for schools are meant to improve the educational quality of institutions which is why we can presume that students from highly subsidized school tend to study more and longer. Children whose parents have an academic background statistically study more often than children whose parents have a worker background. All these aspects support the argument that schooling actually is not an exogenous but an endogenous regressors. Consequently, the assumption of the zero conditional mean does not hold and the OLS estimation would be biased and inconsistent. 
+
+b) Perform instrumental variables estimation for these three options. Which option do you
+prefer? Include in your answer the necessary analyses and numbers on which you base your
+choice.\\
 
 ```{r}
 IV1 <- feols(logwage ~ 1 | schooling ~ distance, data, se = 'hetero')
@@ -243,16 +255,14 @@ summary(IV1)
 summary(IV2)
 summary(IV3)
 ```
-Subsidy appears to be an adequate instrument as the F Test is higher 10. Distance on the other side has a F test lower 10. Moreover, the Sargan Test cannot reject H0, which supports evidence that one of the instruments is not valid - probably distance.
+For the first instrumental variable estimation, which considers distance as the only instrumental variable, we can see that the first-stage F-test gives us a F-statistic of around 5.65. As this is below 10, this gives us evidence that the instrument is not relevant which is why we will not consider it any further.\\
 
-c) 
-H0 for Hausmann (slide 24) can be rejected. Hence, x is endoegnous and we need instrumental variables. We prefer OLS when instruments are very weak as IV estimation is biased.
-Also, OLS is not significant while 
-```{r}
-summary(model1)
-summary(model2)
-summary(IV2)
-```
+The second instrumental variable estimation, which considers subsidy as the only instrumental variable, we can see that the first-stage F-test gives us a F-statstic of around 41.2. Hence, there is evidence that the instrument is relevant. Looking at the second-stage regression, we see that schooling is significant and as a positive effect on wage.\\
+
+The third instrumental variable estimation includes distance and subsidy as its instrumental variables and has a F statistic of around 23. However, the Sargan test, which can be applied when the model is overidentified and tests the exogeneity of instruments, cannot reject the null hypothesis as the p-value is around 0.37. This aligns with our previous results as the Sargan test assumes that one of the instrumental variables is valid and tests whether the instrumental variables are jointly valid. Considering, that distance is not a relevant instrumental variable, it is not surprising that the Sargant test does not reject the null hypothesis.\\
+
+Hence, we would choose subsidy as the only instrumental variable for our estimation. \\
+
 ```{r}
 IV4 <- feols(logwage ~ age + agesq | schooling ~ subsidy, data, se = 'hetero')
 
@@ -264,20 +274,36 @@ summary(IV5)
 summary(IV6)
 ```
 
+Going further, we also estimate instrumental variable estimations where we include age and squared age. Although the numbers change across the estimations, the estimations also show that distance is not a valid instrumental variable while subsidy is. Further, the Sargan test does not reject the null hypothesis in any of the estimations. Therefore, this supports our choice of subsidy as the instrumental variable.\\
+
+c) Compare the IV estimates with the OLS outcomes. Under which conditions would you
+prefer OLS over IV? Perform a test and use the outcome of the test to support your choice
+between OLS and IV. Motivate your choice.
+
 ```{r}
-IV7 <- feols(logwage ~ age + agesq + married| schooling ~ subsidy, data, se = 'hetero')
-
-IV8 <- feols(logwage ~ age + agesq + married| schooling ~ distance, data, se = 'hetero')
-
-IV9 <- feols(logwage ~ age + agesq + married| schooling ~ distance + subsidy, data, se = 'hetero')
-summary(IV7)
-summary(IV8)
-summary(IV9)
+model3 <- lm(logwage ~ schooling, data = data)
+stargazer(model1)
+stargazer(model3)
+summary(IV2)
+summary(IV4)
 ```
+Our first OLS model includes schooling, age and age squared as regressors. Schooling is highly significant and has a positive effect on earnings. Age and age squared have a negative effect on wages but are not significant. The F test is around 604.3 so the estimator are jointly significant. The adjuste $R^2$ is around 0.8135. 
+
+The second OLS model include only schooling as a regressor. It has a positive effect on wages, although lower than in the other OLS estimation, and is not significant. In comparison to the previous OLS estimation, the $R^2$ is substantially lower at around 0.0023.
+
+Comparing these two models, the first OLS estimation seems more sensible as its explanatory power is substantially higher.\\
+
+The instrumental variable estimation that include schooling as the only regressors and subsidy as its instrumental variable has a F statistic of 41.2. Schooling has a positive effect on wages and is significant at 0.001. The Wu-Hausman test rejects the null hypothesis at 0.01. Hence, there is evidence for endogeneity of the regressor schooling. $R^2$ does not have any informative power in an instrumental variable estimation as it is only meaningful when the Gauss-Markov Theorem assumptions are satisfied which is why we do not consider it here any further. 
+
+The last estimation includes schooling as its endogenous regressors with subsidy as its instrumental variable and age and age squared as its exogenous regressors. The F statistic is around 43.3, so slightly higher than in the previous estimation. Schooling is significant at 0.0001 and has a positive effect on wages, although lower than in the previous instrumental variable estimation. The Wu-Hausman test is not as significant as in the previous estimation but we are still able to reject the null hypothesis at 10%. \\
+
+Given our results, we would prefer the IV estimation as there is evidence for the endogeneity of schooling. Further, we would choose the estimation that also includes the exogenous regressors age and age squared as the F statistic is higher than in the estimation where we only included schooling.\\
 
 
 # Question 3
-a)
+a) Create a quantile plot for the log of total medical expenditure. Draw vertical lines to
+indicate the median, the 10th percentile, and the 90th percentile. Describe your plot.
+
 ```{r}
 # Load data
 data2 <- read.csv("assignment1b.csv")
@@ -293,18 +319,54 @@ ylab = "Sample Quantile")
 abline(v=c(0.1,0.5,0.9),col="blue")
 
 ```
+The graph plots every sample quantile for each sample fraction which is why we have the sample fraction on the x axis and the sample quantile on the y axis. Additionally, we added a vertical line at the 10th percentile, the median and the 90th percentile. As the data is ordered for the plot, it is not surprising that the sample quantiles are increasing monotonically. Between the 0th and 10th percentile, the sample quantiles increase exponentially. From te 10th until the 90th percentile, the sample quantile only increase from approximately 6 to 10. Afterwards, they increase exponentially until 12.\\
 
-b)
+b) Estimate the model for the quantiles $q = 0.1, 0.25, 0.5, 0.75\space \text{and} \space 0.9$. Briefly explain your result. Compare quantile regression results to OLS estimates.
 
 ```{r}
 ols <-lm(lntotexp~ totchr + suppins + age + female + white, data = data2)
 qr <- rq(lntotexp~ totchr + suppins + age + female + white, data = data2, tau = c(0.1, 0.25, 0.5, 0.75, 0.9))
-summary(ols)
+stargazer(ols)
 summary(qr)
 ```
 
+```{r}
+ggp1 <- ggplot(data2, aes(totchr, lntotexp)) + 
+  theme_minimal() +
+  geom_point() + 
+  geom_quantile(quantiles = c(0.1, 0.25, 0.5, 0.75, 0.9), col="red") +
+  geom_smooth(method = "lm", col="green")
 
-c)
+ggp2 <- ggplot(data2, aes(suppins, lntotexp)) + 
+  theme_minimal() +
+  geom_point() + 
+  geom_quantile(quantiles = c(0.1, 0.25, 0.5, 0.75, 0.9), col="red") +
+  geom_smooth(method = "lm", col="green")
+
+ggp3 <- ggplot(data2, aes(age, lntotexp)) + 
+  theme_minimal() +
+  geom_point() + 
+  geom_quantile(quantiles = c(0.1, 0.25, 0.5, 0.75, 0.9), col="red") +
+  geom_smooth(method = "lm", col="green")
+
+ggp4 <- ggplot(data2, aes(female, lntotexp)) + 
+  theme_minimal() +
+  geom_point() + 
+  geom_quantile(quantiles = c(0.1, 0.25, 0.5, 0.75, 0.9), col="red") +
+  geom_smooth(method = "lm", col="green")
+
+ggp5 <- ggplot(data2, aes(white, lntotexp)) + 
+  theme_minimal() +
+  geom_point() + 
+  geom_quantile(quantiles = c(0.1, 0.25, 0.5, 0.75, 0.9), col="red") +
+  geom_smooth(method = "lm", col="green")
+
+grid.arrange(ggp1, ggp2, ggp3, ggp4, ggp5, ncol = 2) 
+```
+
+
+c) Graph the estimated coefficients from the quantile regressions for $q$from $0.05\space \text{to} \space 0.95$ in
+increments of $0.05$, together with their $95\%$ confidence interval and the corresponding estimates from a linear regression (and their $95%$ confidence interval). Discuss your findings.
 
 ```{r}
 qr2 <- rq(lntotexp~ totchr + suppins + age + female + white, data = data2,  tau = seq(0.05, 0.95, by = 0.05))

@@ -1,0 +1,41 @@
+OLS
+F stat 144.6 so jointly significant
+totchr (positive 0.45), suppins (postive 0.26), age (positve 0.013) significant at 0.001
+female (negative -0.08) siginificant at 0.1
+white (positive 0.32) signiciant at 0.05
+R^2 adjusted 0.1955
+
+tau 0.1:
+totchr positive (0.54) and signicnat at 0.001
+suppins postive (0.396) and siginificant at 0.001
+age positive (0.19) and significant at 0.01
+female is not significant
+white is not significant
+
+tau 0.25:
+totcht 0.46 and significant at 0.001
+suppins 0.39 and significant at 0.001
+age 0.016 and significant at 0.001
+female not significant
+white 0.338 and signicant at 0.001
+
+tau 0.5:
+totchr 0.39 significant at 0.001
+suppins 0.28 significant at 0.001
+age 0.015 and significant at 0.001
+female not significant
+white 0.54 and signicicant at 10%
+
+tau 0.75: 
+totchr 0.37 and significant at 0.001
+suppins 0.15 and significant at 0.05
+age 0.18 and significant at 0.001
+female -0.12 and significant at 0.05
+white not significant
+
+tau 0.9:
+totchr 0.36 and significant at 0.001
+suppins not significant
+age nit significant
+female -0.16 and significant at 0.1
+white not significant
