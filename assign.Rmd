@@ -1,0 +1,39 @@
+---
+title: "Econometrics II - Assignment 1"
+author: "Uncensored sloths"
+date: "10 Jan 2022"
+output:
+  pdf_document:
+    includes:
+      in_header: "preamble.tex"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(tinytex.verbose = TRUE)
+
+library(lmtest)
+library(sampleSelection)
+library(fixest)
+library(dplyr) 
+library(quantreg)
+library(stargazer)
+library(ggplot2)
+library(gridExtra)
+```
+
+# Question 1
+
+a) Run an OLS regression for log-earnings on schooling, age, and age squared. Present the
+results and comment on the estimates.\\
+
+```{r}
+# Load data
+data <- read.csv("assignment1a.csv")
+```
+
+```{r}
+# Run regression
+model1 <- lm(logwage ~ schooling + age + agesq, data = data)
+stargazer(model1)
+```

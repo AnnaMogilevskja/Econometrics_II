@@ -1,7 +1,7 @@
 ---
 title: "Econometrics II - Assignment 1"
 author: "Uncensored sloths"
-date: "07 January 2022"
+date: "10 Jan 2022"
 output:
   pdf_document:
     includes:
@@ -10,6 +10,8 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+options(tinytex.verbose = TRUE)
+
 library(lmtest)
 library(sampleSelection)
 library(fixest)
@@ -30,7 +32,7 @@ results and comment on the estimates.\\
 data <- read.csv("assignment1a.csv")
 ```
 
-```{r}
+```{r, results='asis'}
 # Run regression
 model1 <- lm(logwage ~ schooling + age + agesq, data = data)
 stargazer(model1)
@@ -50,15 +52,13 @@ A sample selection model helps to address the issue of self selection. Therefore
 
 In our case, the (i) selection equation ($I_i^* = Z_i\prime \gamma + V_i$) models the latent variable $I_i^*$, which depends on a set of observed variables $Z_i$ and unobserved characteristics $V_i$, and based on which individuals' labor market participation is determined according to the following indicator function:
 
-depicts the decision of the individual whether to work or not:
-
 $$
-I_i = \begin{cases}
-            1 & \text{(employed)} & \text{if} \space I_i^* > 0\\
-            0 & \text{(unemployed)} & \text{if} \space I_i^* \leq 0
-        \end{cases}
+I_i =
+\begin{cases}
+1 \text{ (employed) } &\text{ if } I_i^* > 0 \\
+0 \text{ (unemployed) } &\text{ if } I_i^* \leq 0
+\end{cases}
 $$
-
 One interpretation of this selection modulation could be that $I_i^*$ corresponds to individuals' utility from working, so that individuals only decide to work if this utility is strictly positive. However, considerations of the selection process being also determined by individuals' accessibility to the labor market complicate the matter of interpretation and arguably conflict with its designation as self selection.
 
 The (ii) regression equation specifies the latent variable $Y_i^*$, i.e. the log wage of individuals, which depends on a set of observed regressors $X_i$ and unobserved characteristics $U_i$:
@@ -67,12 +67,14 @@ $$
 Y_i^* = X_i\prime \beta + U_i
 $$
 This latent log wage is, however, only observed for individuals being (self) selected into working by the above specified selection process, that is if $I_i=1$. Specifically, observed log wages $Y_i$ are specified as follows.
+
 $$
-Y_i^* = \begin{cases}
+Y_i = \begin{cases}
             Y_i^* & \text{if} \space I_i = 1\\
             missing & \text{if} \space I_i = 0
         \end{cases}
 $$
+
 So one needs to find characteristics that determine employment $I_i$ to be included in $Z_i$. For the selection regression, we include schooling, age, age squared, marriage, subsidy and distance in $Z_i$ as they all could have potential impact on the employment decision/selection. Schooling, subsidy and distance may have an impact on the educational level of individuals. Since we would expect chances of employment to increase in an individual's educational level, these factors may significantly enter the selection process. Furthermore, distance (and subsidy) could be viewed as proxies for the geographical remoteness of individuals' location of living and as such may be associated with a lower accessibility to the labor market.Moreover, age is likely to determine the employment decision as usually very young an old individuals do not work. However, as this is obviously not a linear relationship, one needs to include the squared age to account for this non-linearity. Lastly, marriage is included as couples, especially in traditional value settings, may tend to divide responsibilities between each other resulting in one partner only working while the other takes care of housework. Along these argumentative lines, for all but one of these variables an assertion towards their impact on wages can be easily made, but is omitted here for sake of textual efficiency. Hence, these should be included in $X_i$ of the regression equation. We would exclude marriage as marriage saliently affects the employment decision while it cannot be intuitively rationalized to affect wages (see below).\\
 
 As alluded to above, OLS estimation fails in this context and given the purpose of predicting the potential earnings of the non-employed for both conceptual and technical reasons. Conceptually, it is intuitive to conclude that OLS is unsuitable since it disregards all data of the non-employed and thus ignores the entire sample drawn from the population for which inferences constitute the empirical goal. Furthermore, parameter estimation under OLS does not honor the fact that sample selection is non-random and under non-random and observable conditions wages are not observed. Technically, it can be shown that OLS only provides consistent parameter estimates if either (i) the error terms $U_i$ and $V_i$ are independent or, i.e. to assume random sampling, or (ii) if $X_i$ and $Z_i$ are uncorrelated, i.e. $\mathrm{E}(U_i|X_i)=0$. To make this point more explicit, we define the conditional expectation with which the empirical task at hand is concerned with, that of the unobserved earnings of the non-employed:\\
@@ -92,7 +94,7 @@ As stated above, we use marriage as the exclusion restriction. Especially in tra
 data$work = ifelse(is.na(data$logwage), 0, 1)
 ```
 
-```{r}
+```{r, results='asis'}
 heck1 = heckit(work ~ age + agesq + married + schooling + distance + subsidy,
                logwage ~ age + agesq + married+ schooling + distance + subsidy, data=data)
 
@@ -119,7 +121,7 @@ As all other estimators are not significant, we should estimate another selectio
 
 d) Estimate the sample selection model with maximum likelihood both with and without the
 exclusion restriction and compare the outcomes.
-```{r}
+```{r, results='asis'}
 ml1 = selection(work ~ age + agesq + married + schooling + distance + subsidy,
                logwage ~ age + agesq + married+ schooling + distance + subsidy, data=data)
 
@@ -215,13 +217,14 @@ hist(datanew$Ystarhat2, col=rgb(0,0,1,0.5),xlab="Ystarhat2", main="Heckman" )
 hist(datanew$Ystarhat3, col=rgb(0,1,0,0.5),xlab="Ystarhat3", main="OLS" )
 ```
 Comparison of the histograms obtained yields the conclusion that the distributions of potential earnings for the non-employed implied by the three models are in general very close, while those of the two sample selection models are as one might expect virtually identical. Obviously, the exclusion restriction applied to the Heckman model results in a small difference in estimated parameters and thus in expected conditional values. This difference is, however, unargubly bigger towards the OLS model, which not only yields a further diverging estimate for $\beta$ (for reasons explained above), but also generates values for the conditional expectation which are further off owing to omission of the correction term $\mathrm{E}(U_i|V_i\leq -Z_i^\prime\gamma,X_i,Z_i)$.
- 
-Question 2
+\clearpage
+
+# Question 2
 
 a)  Discuss the estimation of the causal effect of schooling on earnings by OLS. In particular, address whether or not it is plausible that regularity conditions for applying OLS are
 satisfied.\\
 
-```{r}
+```{r, results='asis'}
 model3 <- lm(logwage ~ schooling, data = data)
 stargazer(model3)
 ```
@@ -278,7 +281,7 @@ c) Compare the IV estimates with the OLS outcomes. Under which conditions would 
 prefer OLS over IV? Perform a test and use the outcome of the test to support your choice
 between OLS and IV. Motivate your choice.
 
-```{r}
+```{r, results='asis'}
 stargazer(model1)
 stargazer(model3)
 summary(IV2)
@@ -295,7 +298,7 @@ The instrumental variable estimation that include schooling as the only regresso
 The last estimation includes schooling as its endogenous regressors with subsidy as its instrumental variable and age and age squared as its exogenous regressors. The F statistic is around 43.3, so slightly higher than in the previous estimation. Schooling is significant at 0.0001 and has a positive effect on wages, although lower than in the previous instrumental variable estimation. The Wu-Hausman test is not as significant as in the previous estimation but we are still able to reject the null hypothesis at 10%. \\
 
 Given our results, we would prefer the IV estimation as there is evidence for the endogeneity of schooling. Further, we would choose the estimation that also includes the exogenous regressors age and age squared as the first-stage F statistic is higher than in the estimation where we only included schooling and analysis of the adjusted $R^2$ for OLS estimation indicates that the overall model fit can be thus considerably improved.\\
-
+\clearpage
 
 # Question 3
 a) Create a quantile plot for the log of total medical expenditure. Draw vertical lines to
@@ -320,7 +323,7 @@ The graph plots every sample quantile for each sample fraction which is why we h
 
 b) Estimate the model for the quantiles $q = 0.1, 0.25, 0.5, 0.75\space \text{and} \space 0.9$. Briefly explain your result. Compare quantile regression results to OLS estimates.
 
-```{r}
+```{r, results='asis'}
 ols <-lm(lntotexp~ totchr + suppins + age + female + white, data = data2)
 qr <- rq(lntotexp~ totchr + suppins + age + female + white, data = data2, tau = c(0.1, 0.25, 0.5, 0.75, 0.9))
 stargazer(ols)
@@ -391,10 +394,10 @@ In case of the regressor age, the OLS and quantile estimation align from the 30t
 Along these lines, one could also make sense of the finding that being female only has a significant negative effect on medical expenditures for high percentiles if one assumes that costs associated with severe and thus costly diseases systemically differs across sex.
 
 Lastly, the quantile regression output suggests the variable white to have a significantly positive effect on medical expenditures for intermediate percentiles. In contrast to the other effects, it seems rather unintuitive to construct an argument for this notion and is left to an econometrician who is more familiar with the pecularities of systemic ethnic differences in the country considered here.
-
+\clearpage
 # References
 
-Chun, H., & Lee, I. (2001). Why do married men earn more: Productivity or marriage selection?, Economic Inquiry, 39(2), 307-319.\\
+Chun, H., and Lee, I. (2001). Why do married men earn more: Productivity or marriage selection?, Economic Inquiry, 39(2), 307-319.\\
 
 Greene, W. H. (2003). Econometric analysis. 5th edition, Pearson Education India.\\
 
