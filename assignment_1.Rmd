@@ -34,45 +34,57 @@ model1 <- lm(logwage ~ schooling + age + agesq, data = data)
 stargazer(model1)
 ```
 
-As the results of the regression show the estimate for schooling is highly significant and positive which means an additional year of school increases the log wage by around 0.22. The estimates for age and age squared are negative which means the older an individual is the lower the log wage. However, both estimates are not significant.\\
+As the results of the regression show the estimate for schooling is highly significant and positive which means an additional year of schooling increases the log wage by around 0.22, i.e. that an additional year of schooling is associated with an $(\exp(0.22)-1)\cdot100\% \approx 24.61\%$ increase in wage. The estimates for age and age squared are negative which means that older individuals are associated with lower log-wages. However, both estimates are not significant. Thus we do not expand on the interpretation of these coefficients.\\
 
 b) Briefly discuss the sample selection problem that may arise in using these OLS estimates
 for the purpose of predicting the potential earnings of the non-employed. Formulate the
 sample selection model. In your answer, include an explanation why OLS may fail in this
 context.\\
 
-The researcher's aim is to gain insight on the potential earnings of unemployed people. However, there is the possibility of self selection of unemployed individuals. Reasons for self selection might be either the unwillingness to work or an inaccessibility to the job market, and both of these aspects may relate to certain characteristics of the individuals.\\
-To be clear, we do not exactly know why these individuals are unemployed and whether these reasons could have an effect on their earnings if they worked. If for instance the reason why they do not work is due inaccessibility to the job market as a result of a low education level, we can assume that in case of employment they would have a lower wage than individuals who are already employed. However, if certain characteristics determine the self selection into unemployment, the sample is non-random. Consequently, the OLS estimates would be inconsistent.\\
+The researcher's aim is to gain insight on the potential earnings of unemployed people. However, there is the (likely) possibility of a non-random (self) selection process of unemployed individuals. Reasons for self selection might be (non-exclusively) unwillingness to work and/or inaccessibility to the labor market, and both of these aspects may relate to certain characteristics of individuals.\\
+To be clear, we do not exactly know why these individuals are unemployed and whether these reasons could have an effect on their earnings if they worked. If for instance the reason why they do not work is due to inaccessibility to the job market as a result of a low education level, we can assume that in case of employment they would have a lower wage than individuals who are already employed. Put differently, the estimation of the sign and magnitude of variable effects on wages, on which a prediction of the potential earnings of the non-employed would ultimately be based on, needs to account for the fact that conditional on certain individual characteristics such a wage is not observed, because the individual is not employed. OLS is omitting all observations for which the wage is not observed, and is thus a conceptually inappropriate technique to apply in the context at hand. Moreover, if the selection process is assumed to be non-random, i.e. that certain characteristics determine the (self) selection into unemployment, this implies non-random sampling which renders the OLS estimates inconsistent. Both the conceptual and technical inadequacy of OLS estimation is revisited below after a sample selection model has been explicitly specified.\\
 
-A sample selection model helps to address the issue of self selection. Therefore, we need to formulate an indicator and a regression function. In our case, the indicator function ($I_i^* = Z_i\prime \gamma + V_i$) depicts the decision of the individual whether to work or not:
+A sample selection model helps to address the issue of self selection. Therefore, we formulate (i) a selection equation and (ii) a regression equation. 
+
+In our case, the (i) selection equation ($I_i^* = Z_i\prime \gamma + V_i$) models the latent variable $I_i^*$, which depends on a set of observed variables $Z_i$ and unobserved characteristics $V_i$, and based on which individuals' labor market participation is determined according to the following indicator function:
+
+depicts the decision of the individual whether to work or not:
 
 $$
-I_i^* = \begin{cases}
+I_i = \begin{cases}
             1 & \text{(employed)} & \text{if} \space I_i^* > 0\\
             0 & \text{(unemployed)} & \text{if} \space I_i^* \leq 0
         \end{cases}
 $$
-The regression function depicts the log wage, but only for individuals who decide to work:
+
+One interpretation of this selection modulation could be that $I_i^*$ corresponds to individuals' utility from working, so that individuals only decide to work if this utility is strictly positive. However, considerations of the selection process being also determined by individuals' accessibility to the labor market complicate the matter of interpretation and arguably conflict with its designation as self selection.
+
+The (ii) regression equation specifies the latent variable $Y_i^*$, i.e. the log wage of individuals, which depends on a set of observed regressors $X_i$ and unobserved characteristics $U_i$:
 
 $$
 Y_i^* = X_i\prime \beta + U_i
 $$
-
+This latent log wage is, however, only observed for individuals being (self) selected into working by the above specified selection process, that is if $I_i=1$. Specifically, observed log wages $Y_i$ are specified as follows.
 $$
 Y_i^* = \begin{cases}
-            Y_i^* & \text{if} \space I_i^* = 1\\
-            missing & \text{if} \space I_i^* = 0
+            Y_i^* & \text{if} \space I_i = 1\\
+            missing & \text{if} \space I_i = 0
         \end{cases}
 $$
-So we need to find characteristics that determine employment. For the indicator regression, we would include any schooling, age, age squared, marriage, subsidy and distance as they all could have potential impact on the employment decision. Schooling, subsidy and distance have an impact on the educational level of individuals. The higher the educational level, the better are their chance of employment. Age also determines employment as usually very young an old individuals do not work. However, as this is obviously not a linear relationship, we need to include the squared age to account for the non-linearity. Marriage is included as couples, especially in traditional settings, tend to divide responsibilities between each other which often can result in one partner only working while the other takes care of housework. For the regression function, we would exclude marriage as marriage affects employment but not the wage.\\
+So one needs to find characteristics that determine employment $I_i$ to be included in $Z_i$. For the selection regression, we include schooling, age, age squared, marriage, subsidy and distance in $Z_i$ as they all could have potential impact on the employment decision/selection. Schooling, subsidy and distance may have an impact on the educational level of individuals. Since we would expect chances of employment to increase in an individual's educational level, these factors may significantly enter the selection process. Furthermore, distance (and subsidy) could be viewed as proxies for the geographical remoteness of individuals' location of living and as such may be associated with a lower accessibility to the labor market.Moreover, age is likely to determine the employment decision as usually very young an old individuals do not work. However, as this is obviously not a linear relationship, one needs to include the squared age to account for this non-linearity. Lastly, marriage is included as couples, especially in traditional value settings, may tend to divide responsibilities between each other resulting in one partner only working while the other takes care of housework. Along these argumentative lines, for all but one of these variables an assertion towards their impact on wages can be easily made, but is omitted here for sake of textual efficiency. Hence, these should be included in $X_i$ of the regression equation. We would exclude marriage as marriage saliently affects the employment decision while it cannot be intuitively rationalized to affect wages (see below).\\
 
-However, the issue of the non-randomness of the sample still remains. Moreover, the independent variables of the indicator and regression functions are correlated (multicollinearity?). 
+As alluded to above, OLS estimation fails in this context and given the purpose of predicting the potential earnings of the non-employed for both conceptual and technical reasons. Conceptually, it is intuitive to conclude that OLS is unsuitable since it disregards all data of the non-employed and thus ignores the entire sample drawn from the population for which inferences constitute the empirical goal. Furthermore, parameter estimation under OLS does not honor the fact that sample selection is non-random and under non-random and observable conditions wages are not observed. Technically, it can be shown that OLS only provides consistent parameter estimates if either (i) the error terms $U_i$ and $V_i$ are independent or, i.e. to assume random sampling, or (ii) if $X_i$ and $Z_i$ are uncorrelated, i.e. $\mathrm{E}(U_i|X_i)=0$. To make this point more explicit, we define the conditional expectation with which the empirical task at hand is concerned with, that of the unobserved earnings of the non-employed:\\
+
+$$
+\mathrm{E}(Y_i^*|I_i=0,X_i,Z_i)=\mathrm{E}(X_i^\prime\beta+U_i|Z_i^\prime\gamma+V_i\leq0,X_i,Z_i)=X_i^\prime\beta+\mathrm{E}(U_i|V_i\leq -Z_i^\prime\gamma,X_i,Z_i)
+$$
+If either of the above specified conditions are satisfied it follows that the last term equals $\mathrm{E}(U_i)=0$, such that OLS gives consistent estimates of $/beta$, on which predictions of the potential wage the non-employed would be based, otherwise, as can be explicitly shown, OLS estimates are both biased and inconsistent. Because we assume sampling to be non-random as well as because $Z_i$ and $X_i$ have common components, both conditions very likely do not hold in the context at hand, so that OLS estimation is clearly inadequate.\\
 
 c) Choose a suitable candidate as an exclusion restriction for the sample selection model.
 Motivate your choice. Estimate the sample selection model with the Heckman two-step
 estimator both with and without the exclusion restriction and compare the outcomes.\\
 
-As already elaborated in the previous subquestion, we use marriage as the exclusion restriction.Especially in traditional setting, when married, the partner who earns less often decides to stay unemployed and take responsibility for house work. However, marriage does not necessarily directly affect the amount individuals earn (although research shows that this is not necessarily the case for married men (Pollmann-Schult 2011; Chun and Lee 2001)).  
+As stated above, we use marriage as the exclusion restriction. Especially in traditional settings, when married, the partner who earns less often decides to stay unemployed and take responsibility for house work. However, marriage does not necessarily directly affect the amount individuals earn (although research shows that this is not necessarily the case for married men (Pollmann-Schult 2011; Chun and Lee 2001)).  
 
 ```{r}
 data$work = ifelse(is.na(data$logwage), 0, 1)
@@ -88,9 +100,16 @@ heck2 = heckit(work ~ age + agesq + married + schooling + distance + subsidy,
 stargazer(heck1)
 stargazer(heck2)
 ```
-Comparing both models, we can see that for indicator function the estimates, their standard errors and t-values are the same. In this regression only marriage has a positive significant effect on the indicator which means that a married person is more likely to work. This is not on line with the narrative we proposed. However, a reason why married individuals are more likely to work is that they bear a higher social responsibility for the overall household while singles generally only have to take care of a one-person household.\\
+Comparing both models, we can see that for indicator function the estimates, their standard errors and t-values are the same. In this regression only marriage has a positive significant effect on the indicator which means that a married person is more likely to work. This is not in line with the sign of the relationship proposed a priori. However, a reason why married individuals are more likely to work may be that they bear a higher social responsibility for their household while singles generally only have to take care of a one-person household.\\
 
-For the outcome equation, schooling is positive and significant for the estimation where we exclude marriage in the outcome equation, indicating that an additional school year increases the log wage by approximately 0.19. In the other estimation, where we include marriage in the outcome equation, no estimator is significant (except for the intercept). Furthermore, no values for the standard error, t value and p value were estimated in case of the marriage estimator.\\
+For the outcome equation, schooling is positive and significant for the estimation where we exclude marriage in the outcome equation, indicating that an additional school year increases the log wage by approximately 0.19, i.e. is associated with an $(\exp(0.19)-1)\cdot100\%\approx 20.09%$ increase in earnings. In the nother estimation, where we include marriage in the outcome equation, no estimator is significant (except for the intercept). Furthermore, no values for the standard error, t-value and p-value were estimated for the marriage estimator in the regression equation owing to the identification problem of the Heckman two-step procedure which is not resolved by means of an exclusion restriction in this case.\\
+
+More specifically, this identification problem is due to perfect collinearity in the second step of the Heckman two-step procedure. If $Z_i=X_i$ the regression equation in this step reads as follows and suffers from perfect collinearity because the inverse Mills ratio $\lambda(x)=\frac{\phi(x)}{\Phi(x)}$ is near linear for most of its domain:\\
+
+$$
+Y_i=X_i^\prime\beta+\rho\sigma\frac{\phi(Z_i^\prime \hat\gamma)}{\Phi(Z_i^\prime \hat\gamma)}+U_i^*=X_i^\prime\beta+\rho\sigma\lambda(Z_i^\prime \hat\gamma)+U_i^*=X_i^\prime\beta+\rho\sigma\lambda(X_i^\prime \hat\gamma)+U_i^*
+$$
+The described identification problem is resolved by means of the exclusion restriction adopted in the model above, in which the variable marriage is excluded from $X_i$. Hence, only this Heckit model is considered for subseding analysis.\\
 
 As all other estimators are not significant, we should estimate another selection model where we include only the significant estimators in the next step. (COMMENT: if we exclude age and agesq then schooling becomes insignificant)!\\
 
@@ -106,7 +125,8 @@ stargazer(heck4)
 ```
 
 
-d)
+d) Estimate the sample selection model with maximum likelihood both with and without the
+exclusion restriction and compare the outcomes.
 ```{r}
 ml1 = selection(work ~ age + agesq + married + schooling + distance + subsidy,
                logwage ~ age + agesq + married+ schooling + distance + subsidy, data=data)
@@ -120,11 +140,30 @@ stargazer(ml2)
 
 When estimating the equations with the maximum likelihood method we can see that there are only minor differences between the estimation including and excluding the exclusion restriction.\\
 
-In both models, marriage is the only significant estimator in the probit selection equation while in the outcome equation, schooling is the only significant estimator, having a positive effect on log wage (an additional school year, increases log wage by around 0.19).\\ 
+In both models, marriage is the only significant estimator in the probit selection equation while in the outcome equation, schooling is the only significant estimator, having a positive effect on log wage (an additional school year is associated with a $(\exp(0.19)-1)\cdot100\%\approx 20.92\%$ in earnings).\\ 
 
-WHY IS THIS THE CASE?
+Moreover, note that no exclusion restriction is necessary in the case of estimation by means of maximum likelihood because here no two-step approach is taken which gives rise to a collinearity problem. However, normalization of the variance of $V_i$ is necessary also in this case to ensure identifiability. To be explicit, the distributional assumption on the error terms made both in Hackman estimation as well as here is bivariate normality according to:
 
-e) Estimate shape, distribution and expectation 
+$$
+\begin{bmatrix} U_i \\ V_i \end{bmatrix} \sim \mathcal{N}\left(\begin{bmatrix} 0 \\0 \end{bmatrix},\begin{bmatrix}\sigma^2 \space \rho\sigma \\\rho\sigma \space 1\end{bmatrix} \right)
+$$
+To further carve out the benefit and effect of ML estimation that no exclusion restriction is required, the model specification including marriage in $X_i$ is considered for further analysis in e).
+
+
+e) On the basis of your results, how would you specify the distribution of potential earnings
+for the non-employed?\\
+
+To specify the the distribution of potential earnings for the non-employed, histograms of fitted values for all observed non-employed individuals are contrasted across all 3 models considered above: (i) sample selection model with maximum likelihood, (ii) sample selection model with the Heckman two-step estimator, (iii) OLS.\\
+
+Here fitted values should read as the expectation towards the unobserved log wage $Y_i^*$ conditional on the fact that the log wage is not observed, i.e. that the individual is non-employed ($I_i=0$), and on the respective individual characteristics $X_i$ and $Z_i$:\\
+
+\begin{equation*}
+\begin{split}
+\mathrm{E}(Y_i^*|I_i=0,X_i,Z_i)&=\mathrm{E}(X_i^\prime\beta+U_i|Z_i^\prime\gamma+V_i\leq 0,X_i,Z_i)\\&=X_i^\prime\beta+\mathrm{E}(U_i|V_i\leq -Z_i^\prime\gamma,X_i,Z_i)\\&=X_i^\prime \beta+\rho\sigma\mathrm{E}(V_i|V_i\leq -Z_i^\prime\gamma,X_i,Z_i)\\&=X_i^\prime \beta +\rho\sigma \frac{\phi(Z_i^\prime \gamma)}{\Phi( - Z_i^\prime \gamma)}
+\end{split}
+\end{equation*}
+
+While $\rho$ and $\sigma$ are directly estimated along with $\beta$ and $\gamma$ in the case of (i) maximum likelihood estimation, this is not the case for the two-step Heckman estimation. Details on the estimation technique of these structural parameters deployed by the customary pre coded function used here are outlined by Greene (2003, p. 784).\\
 
 ```{r}
 beta <- ml1$estimate[8:14]
@@ -147,6 +186,8 @@ Ystarhat2 = X2 %*% beta2 + rho2 * sigma2 * dnorm( Z %*% gamma2 ) / pnorm( -(Z %*
 datanew <- cbind(datanew, Ystarhat2)
 ```
 
+Note also that in the case of (iii) OLS estimation the last term of the expression for the conditional expectation of $Y_i^*$ above vanishes since random sampling is assumed under OLS such that $\mathrm{E}(U_i|V_i\leq -Z_i^\prime\gamma,X_i,Z_i)=\mathrm{E}(U_i)=0$.\\
+
 ```{r}
 model2 <- lm(logwage ~ age + agesq + married + schooling + distance + subsidy, data = data)
 beta3 <- model2$coefficients
@@ -166,7 +207,7 @@ hist(datanew$Ystarhat2, col=rgb(0,0,1,0.5), add=T)
 hist(datanew$Ystarhat3, col=rgb(0,1,0,0.5),add=T)
 
 # Add legend
-legend("topright", legend=c("ML","Heckmann", "OLS"), col=c(rgb(1,0,0,0.5), 
+legend("topright", legend=c("ML","Heckman", "OLS"), col=c(rgb(1,0,0,0.5), 
      rgb(0,0,1,0.5), rgb(0,1,0,0.5)), pt.cex=2, pch=15 )
 ```
 ```{r}
@@ -177,12 +218,11 @@ par(
 
 hist(datanew$Ystarhat, col=rgb(1,0,0,0.5),xlab="Ystarhat", main="ML" )
 
-hist(datanew$Ystarhat2, col=rgb(0,0,1,0.5),xlab="Ystarhat2", main="Hackmann" )
+hist(datanew$Ystarhat2, col=rgb(0,0,1,0.5),xlab="Ystarhat2", main="Heckman" )
 
 hist(datanew$Ystarhat3, col=rgb(0,1,0,0.5),xlab="Ystarhat3", main="OLS" )
 ```
- Nikki schreib mal was
- 
+Comparison of the histograms obtained yields the conclusion that the distributions of potential earnings for the non-employed implied by the three models are in general very close, while those of the two sample selection models are as one might expect virtually identical. Obviously, the exclusion restriction applied to the Heckman model results in a small difference in estimated parameters and thus in expected conditional values. This difference is, however, unargubly bigger towards the OLS model, which not only yields a further diverging estimate for $\beta$ (for reasons explained above), but also generates values for the conditional expectation which are further off owing to omission of the correction term $\mathrm{E}(U_i|V_i\leq -Z_i^\prime\gamma,X_i,Z_i)$.
  
 Question 2
 
@@ -244,10 +284,14 @@ data2 <- read.csv("assignment1b.csv")
 ```
 
 ```{r}
-#index1 <- which(abs)
-#plot(data2$lntotexp)
-#abline(v = quantile(data2$lntotexp), col="red", lwd=3, lty=2)
-qqplot(data2$lntotexp, data)
+x = data2$lntotexp
+n = length(x)
+plot((1:n - 1)/(n - 1), sort(x), type="l",
+main = "Quantiles for log of total medical expenditure",
+xlab = "Sample Fraction",
+ylab = "Sample Quantile")
+abline(v=c(0.1,0.5,0.9),col="blue")
+
 ```
 
 b)
