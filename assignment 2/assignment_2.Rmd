@@ -15,6 +15,9 @@ library(SciViews)
 library(stargazer)
 library(magrittr)
 library(dplyr)
+library(fixest)
+library(aod)
+library(lmtest)
 ```
 
 # Question 1
@@ -42,8 +45,8 @@ data <- cbind(data, lnearnings)
 of $\beta_1$ Present and explain the result.\\
 
 ```{r, results='asis'}
-pooled1 <- plm(lnearnings ~ school + age + agesq + ethblack, model = "pooling", data=data)
-pooled2 <- plm(lnearnings ~ school + age + agesq + ethblack + asvabc, model = "pooling", data=data)
+pooled1 <- plm(lnearnings ~ school + age + agesq + ethblack + urban + regne + regnc + regw, model = "pooling", data=data)
+pooled2 <- plm(lnearnings ~ school + age + agesq + ethblack + urban + regne + regnc + regw + asvabc, model = "pooling", data=data)
 stargazer(pooled1, pooled2)
 ```
 (ii) Perform a pooled OLS analysis to obtain insight in the heterogeneity of returns to schooling
@@ -51,24 +54,24 @@ by ethnicity. Present the results and comment on the outcomes. What are the conc
 based on this?\\
 
 ```{r, results='asis'}
-pooled3 <- plm(lnearnings ~ school + age + agesq + asvabc, model = "pooling", data=data)
-pooled4 <- plm(lnearnings ~ school + age + agesq + ethblack + ethblack * school + asvabc, model = "pooling", data=data)
-stargazer(pooled2, pooled3, pooled4)
+# pooled3 <- plm(lnearnings ~ school + age + agesq + urban + regne + regnc + regw + regs + asvabc, model = "pooling", data=data)
+pooled4 <- plm(lnearnings ~ school + age + agesq + ethblack + ethblack * school + urban + regne + regnc + regw + asvabc, model = "pooling", data=data)
+stargazer(pooled4)
 ```
 (iii) Perform the analysis for heterogenous schooling effects using the random effects model.
 Present the results and compare the outcomes with the pooled OLS results obtained before.
 Interpret the outcomes.\\
 
 ```{r}
-random1 <- plm(lnearnings ~ school + age + agesq, model = "random", index = c("id", "time"), effect = "twoways", data=data)
+# random1 <- plm(lnearnings ~ school + age + agesq  + urban + regne + regnc + regw + regs, model = "random", index = c("id", "time"), effect = "twoways", data=data)
 
-random2 <- plm(lnearnings ~ school + age + agesq + asvabc, model = "random", index = c("id", "time"), effect = "twoways", data=data)
+# random2 <- plm(lnearnings ~ school + age + agesq + urban + regne + regnc + regw + regs + asvabc, model = "random", index = c("id", "time"), effect = "twoways", data=data)
 
-random3 <- plm(lnearnings ~ school + age + agesq + ethblack + asvabc, model = "random", index = c("id", "time"), effect = "twoways", data=data)
+# random3 <- plm(lnearnings ~ school + age + agesq + ethblack + urban + regne + regnc + regw + regs + asvabc, model = "random", index = c("id", "time"), effect = "twoways", data=data)
 
-random4 <- plm(lnearnings ~ school + age + agesq + ethblack + ethblack  * school + asvabc, model = "random", index = c("id", "time"), effect = "twoways", data=data)
+random4 <- plm(lnearnings ~ school + age + agesq + ethblack + ethblack  * school + urban + regne + regnc + regw + asvabc, model = "random", index = c("id", "time"), effect = "twoways", data=data)
 
-stargazer(random1, random2, random3, random4)
+stargazer(random4)
 ```
 (iv) A priori, would you plead for using fixed effects estimation or random effects estimation?
 Explain your answer.\\
@@ -77,24 +80,21 @@ v) Apply the fixed effects estimator to analyze the heterogenous schooling effec
 the outcomes.\\
 
 ```{r}
-fixed1  <- plm(lnearnings ~ school + age + agesq, model = "within", index = c("id", "time"), effect = "twoways", data = data)
+# fixed1  <- plm(lnearnings ~ school + age + agesq  + urban + regne + regnc + regw, model = "within", index = c("id", "time"), effect = "twoways", data = data)
 
-fixed2  <- plm(lnearnings ~ school + age + agesq + asvabc, model = "within", index = c("id", "time"), effect = "twoways", data = data)
+# fixed2  <- plm(lnearnings ~ school + age + agesq + urban + regne + regnc + regw + asvabc, model = "within", index = c("id", "time"), effect = "twoways", data = data)
 
-fixed3  <- plm(lnearnings ~ school + age + agesq + ethblack + asvabc, model = "within", index = c("id", "time"), effect = "twoways", data = data)
+# fixed3  <- plm(lnearnings ~ school + age + agesq + ethblack + urban + regne + regnc + regw + asvabc, model = "within", index = c("id", "time"), effect = "twoways", data = data)
 
-fixed4  <- plm(lnearnings ~ school + age + agesq + ethblack + ethblack  * school + asvabc, model = "within", index = c("id", "time"), effect = "twoways", data = data)
+fixed4  <- plm(lnearnings ~ school + age + agesq + ethblack + ethblack  * school + urban + regne + regnc + regw + asvabc, model = "within", index = c("id", "time"), effect = "twoways", data = data)
 
-stargazer(fixed1, fixed2, fixed3, fixed4)
+stargazer(fixed4)
 ```
 (vi) Fixed effects estimation may not be as efficient as random effects estimation, but is robust
 to correlation between regressors and the random effect. Can we perform a Hausman test
 in this context? Perform the test you propose.\\
 
 ```{r}
-phtest(fixed1, random1)
-phtest(fixed2, random2)
-phtest(fixed3, random3)
 phtest(fixed4, random4)
 ```
 (vii) Perform Mundlak estimation of the model. Present the results of estimation and test for
@@ -106,19 +106,51 @@ data <- data %>%
   mutate(mean_school = mean(school),
          mean_age = mean(age),
          mean_agesq = mean(agesq),
-         mean_asvabc = mean(asvabc))
+         mean_asvabc = mean(asvabc),
+         mean_urban = mean(urban),
+         mean_regne = mean(regne),
+         mean_regnc = mean(regnc),
+         mean_regw = mean(regw))
 ```
 
 ```{r}
-mundlak1 <- plm(lnearnings ~ school + age + agesq + mean_school+ mean_age + mean_agesq, model = "random", index = c("id", "time"), effect = "twoways", data=data)
+#mundlak1 <- plm(lnearnings ~ school + age + agesq + mean_school+ mean_age + mean_agesq, model = "pooling", index = c("id", "time"), effect = "individual", data=data)
 
-mundlak2 <- plm(lnearnings ~ school + age + agesq + asvabc + mean_school + mean_age + mean_agesq + mean_asvabc, model = "random", index = c("id", "time"), effect = "twoways", data=data)
+#mundlak2 <- feols(lnearnings ~ school + age + agesq + asvabc + mean_school + mean_age + mean_agesq + mean_asvabc, model = "random", index = c("id", "time"), effect = "twoways", data=data)
 
-mundlak3 <- plm(lnearnings ~ school + age + agesq + ethblack + asvabc + mean_school + mean_age + mean_agesq + mean_asvabc, model = "random", index = c("id", "time"), effect = "twoways", data=data)
+#mundlak3 <- plm(lnearnings ~ school + age + agesq + ethblack + asvabc + mean_school + mean_age + mean_agesq + mean_asvabc, model = "random", index = c("id", "time"), effect = "twoways", data=data)
 
-mundlak4 <- plm(lnearnings ~ school + age + agesq + ethblack + ethblack  * school + asvabc + mean_school + mean_age + mean_agesq + mean_asvabc, model = "random", index = c("id", "time"), effect = "twoways", data=data)
+#mundlak4 <- plm(lnearnings ~ school + age + agesq + ethblack + ethblack  * school + asvabc + mean_school + mean_age + mean_agesq + mean_asvabc, model = "random", index = c("id", "time"), effect = "twoways", data=data)
+datafull <- na.omit(data)
+mundlak1 <- pggls(lnearnings ~ school + age + agesq + urban + regne + regnc + regw + asvabc + mean_school+ mean_age + mean_agesq + mean_urban + mean_regne + mean_regnc + mean_regw, model = "random", index = c("id"), effect = "individual", data=datafull)
 
-stargazer(mundlak1, mundlak2, mundlak3, mundlak4)
+summary(mundlak1)
+```
+
+```{r}
+sigma = vcov(mundlak1)
+b = coef(mundlak1)
+#wald.test(b, sigma, Terms = c(10:16))
+waldtest(mundlak1, c(9:16))
+```
+(viii) What are your overall conclusions from the analysis of heterogeneity in returns to schooling
+by ethnicity?\\
+
+(ix) To gain insights on the impact of nonresponse and attrition, the researcher applies a variant
+of the Verbeek and Nijman-test. He defines the dummy variable $d_i$ which is 1 if the individual
+is in the panel for more than 5 waves, and is zero otherwise. Apply the Verbeek and Nijman
+test with this definition of $d_i$ (otherwise equal to the definition in the lecture slides). Draw
+conclusions and address practical problems you possibly met in implementing the test.\\
+
+```{r}
+data <- data %>% group_by(id) %>%
+  mutate(dummy = ifelse(length(id) > 5, 1, 0))
+```
+
+```{r}
+fixedbalanced  <- plm(lnearnings ~ school + age + agesq + ethblack + ethblack  * school + urban + regne + regnc + regw + asvabc, model = "within", index = c("id", "time"), effect = "twoways", data = subset(data, dummy==1))
+
+phtest(fixedbalanced, fixed4)
 ```
 
 
