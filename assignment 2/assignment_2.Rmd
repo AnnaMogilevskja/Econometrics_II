@@ -1,0 +1,125 @@
+---
+title: "Econometrics II - Assignment 2"
+author: "Uncensored sloths"
+date: "13 Jan 2022"
+output:
+  pdf_document:
+    includes:
+      in_header: "preamble.tex"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(plm)
+library(SciViews)
+library(stargazer)
+library(magrittr)
+library(dplyr)
+```
+
+# Question 1
+
+(i) Why does the process of taking each observation relative to its individual-level mean have
+the effect of "controlling for individual effects"?\\
+
+(ii) Two-way fixed effects with terms for both individual and time are often referred to as
+"controlling for individual and time effects". Why might a researcher want to do this rather
+than just taking individual fixed effects and adding a linear/polynomial/etc. term for time?\\
+
+(iii) Why random effects is likely to do a better job of estimating the individual effects than
+fixed effects, if its assumptions hold?\\
+
+# Question 2
+
+```{r}
+# Load data
+data <- read.csv("assignment2.csv")
+lnearnings <- ln(data$earnings)
+data <- cbind(data, lnearnings)
+```
+
+(i) First use pooled OLS to check the impact of including and excluding asvabc on the estimate
+of $\beta_1$ Present and explain the result.\\
+
+```{r, results='asis'}
+pooled1 <- plm(lnearnings ~ school + age + agesq + ethblack, model = "pooling", data=data)
+pooled2 <- plm(lnearnings ~ school + age + agesq + ethblack + asvabc, model = "pooling", data=data)
+stargazer(pooled1, pooled2)
+```
+(ii) Perform a pooled OLS analysis to obtain insight in the heterogeneity of returns to schooling
+by ethnicity. Present the results and comment on the outcomes. What are the conclusions
+based on this?\\
+
+```{r, results='asis'}
+pooled3 <- plm(lnearnings ~ school + age + agesq + asvabc, model = "pooling", data=data)
+pooled4 <- plm(lnearnings ~ school + age + agesq + ethblack + ethblack * school + asvabc, model = "pooling", data=data)
+stargazer(pooled2, pooled3, pooled4)
+```
+(iii) Perform the analysis for heterogenous schooling effects using the random effects model.
+Present the results and compare the outcomes with the pooled OLS results obtained before.
+Interpret the outcomes.\\
+
+```{r}
+random1 <- plm(lnearnings ~ school + age + agesq, model = "random", index = c("id", "time"), effect = "twoways", data=data)
+
+random2 <- plm(lnearnings ~ school + age + agesq + asvabc, model = "random", index = c("id", "time"), effect = "twoways", data=data)
+
+random3 <- plm(lnearnings ~ school + age + agesq + ethblack + asvabc, model = "random", index = c("id", "time"), effect = "twoways", data=data)
+
+random4 <- plm(lnearnings ~ school + age + agesq + ethblack + ethblack  * school + asvabc, model = "random", index = c("id", "time"), effect = "twoways", data=data)
+
+stargazer(random1, random2, random3, random4)
+```
+(iv) A priori, would you plead for using fixed effects estimation or random effects estimation?
+Explain your answer.\\
+
+v) Apply the fixed effects estimator to analyze the heterogenous schooling effects. Interpret
+the outcomes.\\
+
+```{r}
+fixed1  <- plm(lnearnings ~ school + age + agesq, model = "within", index = c("id", "time"), effect = "twoways", data = data)
+
+fixed2  <- plm(lnearnings ~ school + age + agesq + asvabc, model = "within", index = c("id", "time"), effect = "twoways", data = data)
+
+fixed3  <- plm(lnearnings ~ school + age + agesq + ethblack + asvabc, model = "within", index = c("id", "time"), effect = "twoways", data = data)
+
+fixed4  <- plm(lnearnings ~ school + age + agesq + ethblack + ethblack  * school + asvabc, model = "within", index = c("id", "time"), effect = "twoways", data = data)
+
+stargazer(fixed1, fixed2, fixed3, fixed4)
+```
+(vi) Fixed effects estimation may not be as efficient as random effects estimation, but is robust
+to correlation between regressors and the random effect. Can we perform a Hausman test
+in this context? Perform the test you propose.\\
+
+```{r}
+phtest(fixed1, random1)
+phtest(fixed2, random2)
+phtest(fixed3, random3)
+phtest(fixed4, random4)
+```
+(vii) Perform Mundlak estimation of the model. Present the results of estimation and test for
+the joint sigificance of the within-group means.\\
+
+```{r}
+data <- data %>%
+  group_by(id) %>%
+  mutate(mean_school = mean(school),
+         mean_age = mean(age),
+         mean_agesq = mean(agesq),
+         mean_asvabc = mean(asvabc))
+```
+
+```{r}
+mundlak1 <- plm(lnearnings ~ school + age + agesq + mean_school+ mean_age + mean_agesq, model = "random", index = c("id", "time"), effect = "twoways", data=data)
+
+mundlak2 <- plm(lnearnings ~ school + age + agesq + asvabc + mean_school + mean_age + mean_agesq + mean_asvabc, model = "random", index = c("id", "time"), effect = "twoways", data=data)
+
+mundlak3 <- plm(lnearnings ~ school + age + agesq + ethblack + asvabc + mean_school + mean_age + mean_agesq + mean_asvabc, model = "random", index = c("id", "time"), effect = "twoways", data=data)
+
+mundlak4 <- plm(lnearnings ~ school + age + agesq + ethblack + ethblack  * school + asvabc + mean_school + mean_age + mean_agesq + mean_asvabc, model = "random", index = c("id", "time"), effect = "twoways", data=data)
+
+stargazer(mundlak1, mundlak2, mundlak3, mundlak4)
+```
+
+
+
