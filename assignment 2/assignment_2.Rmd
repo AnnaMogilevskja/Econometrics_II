@@ -18,6 +18,7 @@ library(dplyr)
 library(fixest)
 library(aod)
 library(lmtest)
+library(modelsummary)
 ```
 
 # Question 1
@@ -49,54 +50,97 @@ pooled1 <- plm(lnearnings ~ school + age + agesq + ethblack + urban + regne + re
 pooled2 <- plm(lnearnings ~ school + age + agesq + ethblack + urban + regne + regnc + regw + asvabc, model = "pooling", data=data)
 stargazer(pooled1, pooled2)
 ```
+The index test score has a positive significant effect at 1% level on ln earnings. 
+Estimators for schooling is lower in the second model which makes sense if we assume that individuals that attended school for longer time are able to achieve higher results. 
+Being black has also a negative significant effect. However, the magnitude is lower if the index test score is included.
+
+One regional dummy was excluded. As all regional dummies are positive and significant, we can conclude that the dummy that was excluded, so south, indicates that individuals in the south earn less relative to individuals living in other areas.
+
+The adjusted $R^2$ is higher for the model including the index test score.
+
+What about age squared?
+
 (ii) Perform a pooled OLS analysis to obtain insight in the heterogeneity of returns to schooling
 by ethnicity. Present the results and comment on the outcomes. What are the conclusions
 based on this?\\
 
 ```{r, results='asis'}
 # pooled3 <- plm(lnearnings ~ school + age + agesq + urban + regne + regnc + regw + regs + asvabc, model = "pooling", data=data)
-pooled4 <- plm(lnearnings ~ school + age + agesq + ethblack + ethblack * school + urban + regne + regnc + regw + asvabc, model = "pooling", data=data)
+pooled4 <- plm(lnearnings ~ school + age + agesq + ethblack + I(ethblack * school) + urban + regne + regnc + regw + asvabc, model = "pooling", data=data)
 stargazer(pooled4)
 ```
-(iii) Perform the analysis for heterogenous schooling effects using the random effects model.
+The interaction effect between schooling and being black is significant at 1% and positive. So attending school has a higher impact on black people. The other estimators do not change a lot in magnitude except for the estimator black ethnicity. This estimator decreases by X (34%), indicating that being black has a negative impact on earnings. Therefore, the data provide evidence that there is discrimination on the labour market.
+$R^2$ does not increase, however, we get a better picture of the dynamics on the labour market and heterogeneity of the effects. 
+
+(iii) Perform the analysis for heterogeneous schooling effects using the random effects model.
 Present the results and compare the outcomes with the pooled OLS results obtained before.
 Interpret the outcomes.\\
 
-```{r}
+```{r, results='asis'}
 # random1 <- plm(lnearnings ~ school + age + agesq  + urban + regne + regnc + regw + regs, model = "random", index = c("id", "time"), effect = "twoways", data=data)
 
 # random2 <- plm(lnearnings ~ school + age + agesq + urban + regne + regnc + regw + regs + asvabc, model = "random", index = c("id", "time"), effect = "twoways", data=data)
 
 # random3 <- plm(lnearnings ~ school + age + agesq + ethblack + urban + regne + regnc + regw + regs + asvabc, model = "random", index = c("id", "time"), effect = "twoways", data=data)
 
-random4 <- plm(lnearnings ~ school + age + agesq + ethblack + ethblack  * school + urban + regne + regnc + regw + asvabc, model = "random", index = c("id", "time"), effect = "twoways", data=data)
-
-stargazer(random4)
+random4 <- plm(lnearnings ~ school + age + agesq + ethblack + I(ethblack  * school) + urban + regne + regnc + regw + asvabc, model = "random", index = c("id", "time"), effect = "twoways", data=data)
+random4$vcov <- vcovHC(random4, cluster="group")
+stargazer(random4, pooled4)
 ```
+We assume two-way. Time: f.e. exogeneous macroeconomic impacts that lower earnings. Individual: character traits, unobserved educational aspects, economic background, social background, etc.
+
+The interaction between ethnicity and schooling is not significant anymore, as well as one of the regions. The magnitude of age increased. Magnitude of urban decreased. So all in all, we can see that the magnitudes of the estimators are different from OLS. $R^2$ does not have any interpretative power as the Gauss-Markov assumptions do not hold (nochmal nachschauen)
+
 (iv) A priori, would you plead for using fixed effects estimation or random effects estimation?
 Explain your answer.\\
+
+Note that disadvanteges of fixed effext estimation are the following:\\
+\Rightarrow time-invariant regressors are not identified
+\Rightarrow out of sample prediction is impossible consequently (time-invariant regressors do not add any information)
+\Rightarrow need sufficient variation in X
+
+On ther hand, it is robust to correlation between the omitted heterogeneity and the regressors. 
+
+Note that the random-effects model can be used to make predictions outside the sample and time-invariant regressors are informative on this. However, it assumes strongers assumptions than fixed effects. Also, it is more efficient than fixed effects if the stochastic structure is correct. 
+
+The question is whether $\eta_i$ and $\lambda_t$ are uncorrelated to the regressors. Considering that $\eta_i$ could include dimensions as character traits or social and economic backgrounds (of parents), we have to assume that this condition does not hold as these dimension have an impact on schooling f.e. [...]
+Therefore, we would plead for using a fixed effects model despite the disadvantage that it does not identify time-invariant regressors. \\
+
 
 v) Apply the fixed effects estimator to analyze the heterogenous schooling effects. Interpret
 the outcomes.\\
 
-```{r}
+```{r, results='asis'}
 # fixed1  <- plm(lnearnings ~ school + age + agesq  + urban + regne + regnc + regw, model = "within", index = c("id", "time"), effect = "twoways", data = data)
 
 # fixed2  <- plm(lnearnings ~ school + age + agesq + urban + regne + regnc + regw + asvabc, model = "within", index = c("id", "time"), effect = "twoways", data = data)
 
 # fixed3  <- plm(lnearnings ~ school + age + agesq + ethblack + urban + regne + regnc + regw + asvabc, model = "within", index = c("id", "time"), effect = "twoways", data = data)
 
-fixed4  <- plm(lnearnings ~ school + age + agesq + ethblack + ethblack  * school + urban + regne + regnc + regw + asvabc, model = "within", index = c("id", "time"), effect = "twoways", data = data)
-
+fixed4  <- plm(lnearnings ~ school + age + agesq + ethblack + I(ethblack  * school) + urban + regne + regnc + regw + asvabc, model = "within", index = c("id", "time"), effect = "twoways", data = data)
+fixed4$vcov <- vcovHC(fixed4, cluster="group")
 stargazer(fixed4)
 ```
+
+Interaction is significant and negative which differs from our OLS estimation. According to this estimation being black and in school has a lower impact on earnings than for individuals who are not black. Age is not identified in plm which could be cause by assuming time and individual fixed effects as this is not when we only assume individual effect. When we do it with feols, we cannot include both variables! This might be due to the time-invariance of age square - however, this would not explain why this is not an issue with the dummies where we also have a low time-invariance. 
+
+the way twoways is calculated, age becomes zero so it drops out. However, we still would proceed with twoways as macroeconomic dynamics can have significant effects on earnings. COnsidering that the time frame includes f.e. the oil crisis, we should not ignore it. Further, age square partially incorporates the impact of age on earnings. \\
+
 (vi) Fixed effects estimation may not be as efficient as random effects estimation, but is robust
 to correlation between regressors and the random effect. Can we perform a Hausman test
 in this context? Perform the test you propose.\\
 
-```{r}
+```{r} 
+data$interaction <- data$ethblack*data$school
+
+form <- lnearnings ~ school + age + agesq + ethblack +  interaction + urban + regne + regnc + regw + asvabc
+
 phtest(fixed4, random4)
+phtest(form, data = data, index = c("id", "time"), effect = "twoways")
+phtest(form, data = data, index = c("id", "time"), effect = "twoways", method = "aux", vcov = vcovHC)
 ```
+
+
 (vii) Perform Mundlak estimation of the model. Present the results of estimation and test for
 the joint sigificance of the within-group means.\\
 
@@ -113,8 +157,8 @@ data <- data %>%
          mean_regw = mean(regw))
 ```
 
-```{r}
-mundlak2 <- plm(lnearnings ~ school + age + agesq + urban + regne + regnc + regw + asvabc + mean_school+ mean_age + mean_agesq + mean_urban + mean_regne + mean_regnc + mean_regw, model = "pooling", index = c("id"), data=data)
+```{r, results='asis'}
+mundlak2 <- plm(lnearnings ~ school + age + agesq + ethblack + I(ethblack  * school) + urban + regne + regnc + regw + asvabc + mean_school+ mean_age + mean_agesq + I(ethblack*mean_school), model = "random", index = "id", data=data)
 
 #mundlak2 <- feols(lnearnings ~ school + age + agesq + asvabc + mean_school + mean_age + mean_agesq + mean_asvabc, model = "random", index = c("id", "time"), effect = "twoways", data=data)
 
@@ -122,16 +166,16 @@ mundlak2 <- plm(lnearnings ~ school + age + agesq + urban + regne + regnc + regw
 
 #mundlak4 <- plm(lnearnings ~ school + age + agesq + ethblack + ethblack  * school + asvabc + mean_school + mean_age + mean_agesq + mean_asvabc, model = "random", index = c("id", "time"), effect = "twoways", data=data)
 datafull <- na.omit(data)
-mundlak1 <- pggls(lnearnings ~ school + age + agesq + urban + regne + regnc + regw + asvabc + mean_school+ mean_age + mean_agesq + mean_urban + mean_regne + mean_regnc + mean_regw, model = "random", index = c("id"), effect = "individual", data=datafull)
+mundlak1 <- pggls(lnearnings ~ school + age + agesq + ethblack + I(ethblack  * school) + urban + regne + regnc + regw + asvabc + mean_school+ mean_age + mean_agesq + I(ethblack*mean_school) + mean_urban + mean_regne + mean_regnc + mean_regw, model = "random", index = c("id"), effect = "individual", data=datafull)
 
 summary(mundlak1)
+stargazer(mundlak2)
+stargazer(fixed4)
 ```
 
 ```{r}
-sigma = vcov(mundlak1)
-b = coef(mundlak1)
-#wald.test(b, sigma, Terms = c(10:16))
 waldtest(mundlak1, c(9:16))
+waldtest(mundlak2, c(9:16))
 ```
 (viii) What are your overall conclusions from the analysis of heterogeneity in returns to schooling
 by ethnicity?\\
@@ -150,7 +194,9 @@ data <- data %>% group_by(id) %>%
 ```{r}
 fixedbalanced  <- plm(lnearnings ~ school + age + agesq + ethblack + ethblack  * school + urban + regne + regnc + regw + asvabc, model = "within", index = c("id", "time"), effect = "twoways", data = subset(data, dummy==1))
 
-phtest(fixedbalanced, fixed4)
+fixedbalanced$vcov <- vcovHC(fixedbalanced, cluster="group")
+
+phtest(fixed4, fixedbalanced)
 ```
 
 
