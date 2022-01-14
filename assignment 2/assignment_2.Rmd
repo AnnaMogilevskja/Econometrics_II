@@ -114,7 +114,7 @@ data <- data %>%
 ```
 
 ```{r}
-#mundlak1 <- plm(lnearnings ~ school + age + agesq + mean_school+ mean_age + mean_agesq, model = "pooling", index = c("id", "time"), effect = "individual", data=data)
+mundlak2 <- plm(lnearnings ~ school + age + agesq + urban + regne + regnc + regw + asvabc + mean_school+ mean_age + mean_agesq + mean_urban + mean_regne + mean_regnc + mean_regw, model = "pooling", index = c("id"), data=data)
 
 #mundlak2 <- feols(lnearnings ~ school + age + agesq + asvabc + mean_school + mean_age + mean_agesq + mean_asvabc, model = "random", index = c("id", "time"), effect = "twoways", data=data)
 
