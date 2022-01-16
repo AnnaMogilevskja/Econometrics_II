@@ -1,7 +1,7 @@
 ---
 title: "Econometrics II - Assignment 2"
 author: "Uncensored sloths"
-date: "13 Jan 2022"
+date: "16 Jan 2022"
 output:
   pdf_document:
     includes:
@@ -20,25 +20,35 @@ library(aod)
 library(lmtest)
 library(modelsummary)
 library(texreg)
+library(clubSandwich)
 ```
 
 # Question 1
 
 (i) Why does the process of taking each observation relative to its individual-level mean have
-the effect of "controlling for individual effects"?\\
+the effect of "controlling for individual effects"?
 
-The process of taking each observation relative to its individual-level mean is called demeaning. When apply demeaning, the individual fixed effects are dropping out from the model as a results. Hence, we control for the individual effects but we also are not able to estimate the impact of time-invariant regressors. 
+The process of taking each observation relative to its individual-level mean is called demeaning. In order to demean the data, we have to subtract the mean from each regressors, the residuals as well as the dependent variable. Consider a static fixed-effect model
+$$
+Y_{it} = \alpha + X_{it}\prime \beta + \eta_i + U_{it}
+$$
+When we demean the data, the model is transformed to the following model
+$$
+\tilde{Y_{it}} = \tilde{X_{it}}\prime \beta + \tilde{U_{it}} \equiv Y_{it} - \bar{Y_i} = (X_{it} - \bar{X_i})\prime \beta + (U_{it} - \bar{U_i})
+$$
+As one can see, the fixed effect $\eta_i$ drops out of the model as a result. Hence, we control for individual effects by transforming the model in a way that the fixed effects are not part of the model anymore. However, as a consequence, the fixed-effects model is not able to identify time-invariant regressors.  
 
 (ii) Two-way fixed effects with terms for both individual and time are often referred to as
 "controlling for individual and time effects". Why might a researcher want to do this rather
-than just taking individual fixed effects and adding a linear/polynomial/etc. term for time?\\
+than just taking individual fixed effects and adding a linear/polynomial/etc. term for time? 
 
-Firstly, it is easier to apply as you do not have to specify any linear or polynomial term (it is quite tricky as you need to have an idea what it the form of the impact). It especially is convenient to apply when the research only wants to control for time effects but time effects themselves are not part of the research question.
+In order to consider time by adding a linear or polynomial term, the researcher would have to know the form of the relationship between time effect and the dependent variable. However, this can be quite challenging. This is why it simpler to consider time effects by adding a term for time. The fixed-effects model would then control for both, individual and time fixed effects. This is especially convenient when the researcher wants to control for time effects but at the same time time effects are not part of the research question. 
 
 (iii) Why random effects is likely to do a better job of estimating the individual effects than
-fixed effects, if its assumptions hold?\\
+fixed effects, if its assumptions hold? 
 
-Because it is able to estimate timeinvariant regressors, we can also do out sample predictions, it is more efficient, etc. Look at the slides. 
+In comparison to the fixed-effects model, the random-effects model is able to estimate the coeffcients of time-invariant regressors. The reason is that instead of demeaning the data or taking the first difference, we estimate the model using (feasible) Generalized Least Squares (GLS). Therefore, it is also possible to do out-of sample predictions with the random-effects model as the time-invariant regressors are informative. If the assumptions hold, the random-effects model is more efficient than the fixed-effect model. However, the assumption on the stochactic strucutre of the individual effects are quite strict and if does not hold, the estimation is inconsistent.  
+
 
 \clearpage
 
@@ -52,92 +62,114 @@ data <- cbind(data, lnearnings)
 ```
 
 (i) First use pooled OLS to check the impact of including and excluding asvabc on the estimate
-of $\beta_1$ Present and explain the result.\\
+of $\beta_1$ Present and explain the result. 
 
 ```{r, results='asis'}
 pooled1 <- plm(lnearnings ~ school + age + agesq + ethblack + urban + regne + regnc + regw, model = "pooling", data=data)
 pooled2 <- plm(lnearnings ~ school + age + agesq + ethblack + urban + regne + regnc + regw + asvabc, model = "pooling", data=data)
 stargazer(pooled1, pooled2)
 ```
-The index test score has a positive significant effect at $1\%$ level on ln earnings. 
-Estimators for schooling is lower in the second model which makes sense if we assume that individuals that attended school for longer time are able to achieve higher results. 
-Being black has also a negative significant effect. However, the magnitude is lower if the index test score is included.
 
-One regional dummy was excluded. As all regional dummies are positive and significant, we can conclude that the dummy that was excluded, so south, indicates that individuals in the south earn less relative to individuals living in other areas.
+Firstly, we can see that the index test score has a positive and significant effect at $1\%$ on earnings. School has a positive and significant effect in both models, but the magnitude is lower in the model that includes the index test score (model 2) as a regressors. Age on the other side, has a slightly higher magnitude in the second model. Age squared is the same in both models, having a significant negative effect on earnings. Being black also a significant negative effect. However, the magnitude is considerably smaller in the second model. The living area and the regions all have a positive and significant effect in both models with the magnitude being higher for all regressors in the first model. 
 
-The adjusted $R^2$ is higher for the model including the index test score.
+Especially, the estimations for school and being black differ substantially between both models. In case of school, a reason could be that individuals that attended school for a longer time, tend to achieve higher scores which is why including the test scores as a regressors lowers the estimated effect of school. 
 
-What about age squared?
+A reason why the (negative) effect of being black on the earnings is lower in the second model could be that individuals of black ethnicity tend to have lower scores in general. This could be an indicator for systemic discrimination within the school system. Due to the discriminatory structures, black individuals have a worse education on average which results in lower scores which and therefore lower earnings. Hence, including the test scores would lower the magnitude of the effect being black. However, this does not mean that being black has less impact on the earnings as we would have cross effects that are not considered at that point. If this is indeed the case, the current estimation is biased.  
+
+Note that one regional dummy (regs) was excluded. As all regional dummies are positive and significant, we can conclude that individuals living in the south earn relatively less to individuals living in other areas. 
+
+Moreover, $R^2$ is higher for the second model, indicating that the explanatory power is higher when we include the test scores as a regressors. 
 
 (ii) Perform a pooled OLS analysis to obtain insight in the heterogeneity of returns to schooling
 by ethnicity. Present the results and comment on the outcomes. What are the conclusions
-based on this?\\
+based on this? 
 
 ```{r, results='asis'}
-pooled <- plm(lnearnings ~ school + age + agesq + ethblack + I(ethblack * school) + urban + regne + regnc + regw + asvabc, model = "pooling", data=data)
-stargazer(pooled)
+pooled <- plm(lnearnings ~ school + age + agesq + ethblack + ethblack * school + urban + regne + regnc + regw + asvabc, model = "pooling", data=data)
+stargazer(pooled2, pooled)
 ```
-The interaction effect between schooling and being black is significant at $1\%$ and positive. So attending school has a higher impact on black people. The other estimators do not change a lot in magnitude except for the estimator black ethnicity. This estimator decreases by X ($34\%$), indicating that being black has a negative impact on earnings. Therefore, the data provide evidence that there is discrimination on the labour market.
-$R^2$ does not increase, however, we get a better picture of the dynamics on the labour market and heterogeneity of the effects. 
+The estimation shows that the interaction effect between schooling and being black is positive and significant at $1\%$. Attending school has therefore a higher impact on individuals of black ethnicity. The other estimates do not differ substantially from the previous estimated OLS model (that included test scores as a regressor. However, there is one exemption: being black has a substantially more negative effect on earnings than in the previous model. While the first model estimated that being black decreases the earnings by approximately $9.15\%$, the new model estimates, that being black decreases the earnings by approximately $-25.55$ ($e^{-0.295} - 1 \approx -0.25547$). Therefore, the estimation provides evidence that there is discrimination on the labour market. 
+
+Note that $R^2$ does not increase, however, with the new model we get a better picture of the dynamics on the labour market and heterogeneity of the effects.  
 
 (iii) Perform the analysis for heterogeneous schooling effects using the random effects model.
 Present the results and compare the outcomes with the pooled OLS results obtained before.
-Interpret the outcomes.\\
+Interpret the outcomes. 
 
 ```{r, results='asis'}
-random <- plm(lnearnings ~ school + age + agesq + ethblack + I(ethblack  * school) + urban + regne + regnc + regw + asvabc, model = "random", index = c("id", "time"), effect = "twoways", data=data)
+random <- plm(lnearnings ~ school + age + agesq + ethblack + ethblack  * school + urban + regne + regnc + regw + asvabc, model = "random", index = c("id", "time"), effect = "twoways", data=data)
 random$vcov <- vcovHC(random, cluster="group")
 stargazer(pooled, random)
 ```
-We assume two-way. Time: f.e. exogeneous macroeconomic impacts that lower earnings. Individual: character traits, unobserved educational aspects, economic background, social background, etc.
+We estimate a random-fixed model with the same regressors as in the previous OLS model including the interaction effect between school and being black. Further, we assume that there are individual and time fixed effects. In the case of the individual effects, we do not have data on the social and economic backgrounds of the individuals, further educational aspects as well as character traits such as motivation. Aspects like these could have potentially an effect on earnings which why we should consider them by including individual fixed effects. The data set considers a relatively long time frame (1980-2000). During these 20 years, policy changes and macroeconomic dynamics also could have impacted the earnings of individuals which is why they should be considered by including a time fixed effect. 
 
-The interaction between ethnicity and schooling is not significant anymore, as well as one of the regions. The magnitude of age increased. Magnitude of urban decreased. So all in all, we can see that the magnitudes of the estimators are different from OLS. $R^2$ does not have any interpretative power as the Gauss-Markov assumptions do not hold (nochmal nachschauen)
+We also cluster the standard errors as for the panel data at hand one may relatively safely assume that errors are serially correlated across time for each individual, so that standard errors should be clustered by individual. As outlined by Abadie et al. (2017) a more rigorous justification is necessary for the use of clustering which is only shortly touched. First, one must assume heterogeneity in the treatment effect, i.e. of the schooling effect. Since the research question is concerned with this heterogeneity and a priori contemplations support the assertion of heterogeneity this assumption is made here. Second, one must assume either non-random sampling of the population or a non-random allocation of the treatment variable. While the former cannot safely be assessed here, it does not seem far-fetched to assume that the level of schooling differs non-randomly across sampled individuals, e.g. in correlation to variables such as ethnicity or some unobserved variables. Therefore, clustered standard errors (by individuals) are estimated and included in all estimation outputs presented if not stated otherwise. 
+
+While the estimates of schooling and test score only increase marginally, the magnitude of the estimator of age is substantially higher than in the OLS model. The estimates of being black and the interaction between being black and schooling are not significant in the random-fixed model. The esimate for living in the urban area is lower in magnitude in the random-fixed model. This is also the case, for the estimator which indicates whether someone lived in the north-east. The estimate for living in north-central region is not significant anymore and the estimate for living in the west region is higher in magnitude than before. 
+
+The most striking changes are the estimates for age, being black and its interaction effect with schooling. A reason why the estimate for age is higher in the random-fixed model is that this model type recognizes the panel structure of the data and therefore, realizes that the individuals earn more the older they become. However, note that random-effects model only is efficient if the stochastic assumption on the fixed effect holds. Therefore, we should conduct tests before making any conclusion on the heterogeneity of returns to schooling by ethnicity based on the random-effecs model. 
 
 (iv) A priori, would you plead for using fixed effects estimation or random effects estimation?
-Explain your answer.\\
+Explain your answer. 
 
-Note that disadvanteges of fixed effext estimation are the following:\\
-$\Rightarrow$ time-invariant regressors are not identified
-$\Rightarrow$ out of sample prediction is impossible consequently (time-invariant regressors do not add any information)
-$\Rightarrow$ need sufficient variation in X
+The advantage of a random-effects model is that it is able estimate the effect of time-invariant regressors and that it can be used to make predictions outside the sample. Further, it is more efficient than the fixed-effects model but only if the stochastic structure is assumed correctly (which is a rather strict assumption).
 
-On ther hand, it is robust to correlation between the omitted heterogeneity and the regressors. 
+A fixed-effects model, on the other hand, is not able to identify time-invariant regressors and therefore, we cannot make any out of sample predictions. Moreover, a sufficient variation in the regressors is necessary. However, it is robust to the correlation between the  omitted heterogeneity and the regressors.  
 
-Note that the random-effects model can be used to make predictions outside the sample and time-invariant regressors are informative on this. However, it assumes strongers assumptions than fixed effects. Also, it is more efficient than fixed effects if the stochastic structure is correct. 
+The main question is whether $\eta_i$ and $\lambda_t$ are uncorrelated to the regressors. Considering that $\eta_i$ could include dimensions as character traits or social and economic backgrounds (of parents), we have to assume that this condition does not hold as these dimension could potentially have an impact on regressors such as schooling and test scores. Therefore, we would plead for using a fixed effects model despite the disadvantage that it does not identify time-invariant regressors.  
 
-The question is whether $\eta_i$ and $\lambda_t$ are uncorrelated to the regressors. Considering that $\eta_i$ could include dimensions as character traits or social and economic backgrounds (of parents), we have to assume that this condition does not hold as these dimension have an impact on schooling f.e.
-Therefore, we would plead for using a fixed effects model despite the disadvantage that it does not identify time-invariant regressors. \\
-
-
-v) Apply the fixed effects estimator to analyze the heterogenous schooling effects. Interpret
-the outcomes.\\
+v) Apply the fixed effects estimator to analyze the heterogeneous schooling effects. Interpret
+the outcomes. 
 
 ```{r, results='asis'}
 fixed  <- plm(lnearnings ~ school + age + agesq + ethblack + I(ethblack  * school) + urban + regne + regnc + regw + asvabc, model = "within", index = c("id", "time"), effect = "twoways", data = data)
 fixed$vcov <- vcovHC(fixed, cluster="group")
 stargazer(pooled, random, fixed)
 ```
+We estimated a fixed-effects model with the same regressors as in the previous models. Following the same argumentation as with the random-effects model, we include individual and time fixed effects. Further, we cluster the standard errors. As the fixed-effects model is not able to identify time-invariant regressors, we do not have any estimation for being black and the test scores. Note that there also is no estimation for age! When considering time and individual fixed effects, we transform the model to the following form
+$$
+Y_{it} - \bar{Y_i} - \bar{Y_t} + \bar{\bar{Y}} = (X_{it}  - \bar{X_i} - \bar{X_t} + \bar{\bar{X}})\prime \beta + (U_{it}  - \bar{U_i} - \bar{U_t} + \bar{\bar{U}})
+$$
+where $\bar{Y_t} = \frac{1}{N} \sum_{i=1}^N Y_{it}$ and $\bar{\bar{Y}} = \frac{1}{N T} \sum_{i=1}^N \sum_{i=1}^T Y_{it}$ (Cameron and Trivedi 2005, p. 738). Hence, after applying demeaning to the data age completely drops out. Nevertheless, we would proceed with both time and individuals fixed effects as there were important macroeconomic events between 1980 and 2000 that potentially could have had an impact on earnings. One example is the recession that took place between 1980 and 1982. Further, our main aim is to estimate the heterogeneity of returns to schooling of ethnicity and not the effect of age on earnings. 
 
-Interaction is significant and negative which differs from our OLS estimation. According to this estimation being black and in school has a lower impact on earnings than for individuals who are not black. Age is not identified in plm which could be cause by assuming time and individual fixed effects as this is not when we only assume individual effect. When we do it with feols, we cannot include both variables! This might be due to the time-invariance of age square - however, this would not explain why this is not an issue with the dummies where we also have a low time-invariance. 
+While school and age squared are estimated to have approximately the same effect as in previous models, the interaction between being black and school is now significant and negative. Therefore, being black and more years of schooling have not the same effect as for individuals of other ethnicities. The magnitude of the estimations for living in an urban area and living in the north-east region is lower in comparison to previous models. Living in the north-central region has no significant effect on earnings while living in the west region has a higher effect on earnings than before. 
 
-the way twoways is calculated, age becomes zero so it drops out. However, we still would proceed with twoways as macroeconomic dynamics can have significant effects on earnings. COnsidering that the time frame includes f.e. the oil crisis, we should not ignore it. Further, age square partially incorporates the impact of age on earnings. \\
+In comparison to the random effects model, the fixed-effects model provides us with evidence that there is discrimination on the labor market based on the ethnicity. Hence, we should test whether there is correlation between the individual fixed effects and the regressors to determine which model is more adequate.  
 
 (vi) Fixed effects estimation may not be as efficient as random effects estimation, but is robust to correlation between regressors and the random effect. Can we perform a Hausman test
-in this context? Perform the test you propose.\\
+in this context? Perform the test you propose. 
 
-We can perform a hausman test between our fixed and random model with robust standard errors. Note that we included the robust standard errors in the list. It is important to consider the robust standard errors as the test is based on the estimated coeffcient variances. P value is below $1\%$. Hence, we can reject our null hypothesis. Therefore, the random effects model is inconsistent as the assumption of no correlation between the fixed effects and the regressors does not hold. 
+To test whether there is correlation between regressors and the random effects (i.e. across individuals and time in the two-way specification adopted here), one can perform a Hausman test since under the null hypothesis of no correlation ($H_0: \mathrm{E}[\eta_i | X_{i1},\dots,X_{iT}]=0 \space \& \space \mathrm{E}[\lambda_t|X_{1t},\dots,X_{Nt}]=0$) both estimators are consistent, while under the alternative hypothesis of correlation ($H_1: \mathrm{E}[\eta_i | X_{i1},\dots,X_{iT}]\neq0 \space \& \space \mathrm{E}[\lambda_t|X_{1t},\dots,X_{Nt}]\neq0$) only the fixed-effect estimator is consistent. Under such asymptotic circumstances a Hausman test can be applied which is based on the following test statistic: 
+
+$$
+T=\left(\hat{\beta}_{FE}-\hat{\beta}_{RE}\right)^\prime\left(\mathrm{Var}\left(\hat{\beta}_{FE}\right)-\mathrm{Var}\left(\hat{\beta}_{FE}\right)\right)^{-1}\left(\hat{\beta}_{FE}-\hat{\beta}_{RE}\right)
+$$
+
+Since this test statistic is based on the estimated variance of coefficients, standard errors are robustified against serial error correlation. 
+
+(Technical note: since the robustified variance-covariance matrix is passed to the respective model object no further robustification is necessary in the code below.) 
 
 ```{r} 
 phtest(fixed, random)
 ```
 
+Given a p-value of below 1$\%$ we can reject the null hypothesis of the Hausman test. Therefore, the random effects model is inconsistent as the assumption of no correlation between the fixed effects and the regressors does not hold.
 
 (vii) Perform Mundlak estimation of the model. Present the results of estimation and test for
-the joint significance of the within-group means.\\
+the joint significance of the within-group means. 
 
 Wald Test for both significant - jointly significant, covariance between fixed effects and regressors. In line Hausman test.
 Address issues with plm (does not includes means) but regressors are in line with fixed effects model (partially). 
-Pggls is shit - nothing works. Less observations, not consistent with the fixed effect model.But including mean dummies works. We get the error singluraties in plm, so a reasong might be that the rows are too similar and plm needs more variance. Maybe pggls is better with that. 
+Pggls is shit - nothing works. Less observations, not consistent with the fixed effect model.But including mean dummies works. We get the error singluraties in plm, so a reasong might be that the rows are too similar and plm needs more variance. Maybe pggls is better with that.
+
+As an alternative to the Hausman test performed above, it is possible to perform a Wald test based on a Mundlak model which yields identical estimations to the within estimator. The model is specified as follows, where $\omega_i$ is a ransom effect uncorrelated with $X_{it}$.:
+
+$$
+Y_{it}=X_{it}^\prime\beta+\bar{X}_i\gamma+\omega_i+U_{it}
+$$
+This model proposes a salient test for the null hypothesis of random effects, i.e. $H_0: \gamma=0$, against the alternative hypothesis of fixed effects, i.e. $H_1: \gamma \neq 0$, by means of a Wald test. It can be shown that the Mundlak-test is asympototically equivalent to the Hausman test so that one would hope for consistency of their results. 
+
+To estimate the model, one first needs to compute all values of $\bar{X}_{it}$: 
 
 ```{r}
 data <- data %>%
@@ -152,17 +184,16 @@ data <- data %>%
          mean_regw = mean(regw))
 ```
 
+Since the Mundlak model is specified as an one-way random individual effect model, it needs to be estimated by means of (feasibly) GLS. In the output below 2 different estimations of the Mundlak model are obtained by means of different pre-programmed R-functions of the 'pml' package. 
+
+First, the model is estimated using the command plm which does, however, not allow for the inclusion of meaned regional dummies. This may be due to insufficient variance in the regional membership of individuals across time, i.e. insufficient mobility, which leads to high collinearity between the meaned dummy variables in $\bar{X}_i$ and the non-meaned dummy variables in $X_{it}$. To verify the notion that the estimate of $\beta$ should be identical to the within estimator the results of a one-way fixed individual effect model are depicted alongside. As one would expect, estimates are identical for all coefficients except for those of regional membership since the Mundlak model cannot correct for between effects because respective means are not included in $\bar{X}_i$ due to the discussed collinearity problem.  
+
 ```{r, results='asis'}
-mundlak2 <- plm(lnearnings ~ school + age + agesq + ethblack + I(ethblack  * school) + urban + regne + regnc + regw + asvabc + mean_school+ mean_age + mean_agesq + I(ethblack*mean_school), model = "random", index = "id", data=data)
-mundlak2$vcov <- vcovHC(mundlak2, cluster="group")
+mundlak_plm <- plm(lnearnings ~ school + age + agesq + ethblack + I(ethblack  * school) + urban + regne + regnc + regw + asvabc + mean_school+ mean_age + mean_agesq + I(ethblack*mean_school), model = "random", index = "id", data=data)
+mundlak_plm$vcov <- vcovHC(mundlak_plm, cluster="group")
 
-mundlak1 <- pggls(lnearnings ~ school + age + agesq + ethblack + I(ethblack  * school) + urban + regne + regnc + regw + asvabc + mean_school+ mean_age + mean_agesq + I(ethblack*mean_school) + mean_urban + mean_regne + mean_regnc + mean_regw, model = "random", index = c("id"), effect = "individual", data=data)
-
-fixed_oneway  <- plm(lnearnings ~ school + age + agesq + ethblack + I(ethblack  * school) + urban + regne + regnc + regw + asvabc, model = "within", index = c("id", "time"), effect = "individual", data = data)
-fixed_oneway$vcov <- vcovHC(fixed_oneway, cluster="group")
-
-fixed_pggls <- pggls(lnearnings ~ school + age + agesq + ethblack + I(ethblack  * school) + urban + regne + regnc + regw + asvabc, model = "within", index = c("id"), effect = "individual", data=data)
-
+fixed_oneway_plm  <- plm(lnearnings ~ school + age + agesq + ethblack + I(ethblack  * school) + urban + regne + regnc + regw + asvabc, model = "within", index = c("id", "time"), effect = "individual", data = data)
+fixed_oneway_plm$vcov <- vcovHC(fixed_oneway_plm, cluster="group")
 ```
 ```{r}
 # pggls (http://tarohmaru.web.fc2.com/R/ExerciseDiagnostics.html)
@@ -199,25 +230,67 @@ setMethod("extract", signature = className("pggls", "plm"),
           definition = extract.pggls)
 ```
 ```{r}
-screenreg(list(mundlak2, fixed_oneway), digits=3, single.row=TRUE)
-screenreg(list(mundlak1, fixed_pggls), digits=3, single.row=TRUE)
+screenreg(list(mundlak_plm, fixed_oneway_plm), digits=3, single.row=TRUE)
 ```
+(Technical note: to obtain sleek output for the pggls model we used code from Taroh Maru 2015)
 
+To robustify our analysis, estimation of the Mundlak-model is also achieved by means of the plm-package function pggls which does allow for the inclusion of meaned regional dummies. Although discussion of the exact reasons for the possibility to include these means only for the estimation technique adopted by the pggls function are beyond the scope of this assignment (and the knowledge of the uncensored sloths), it is not unlikely to assume that it can allow for higher collinearity between regressors. As above, results of a one-way fixed individual effect model estimated by means of pggls are depicted alongside but yield rather puzzling divergences which are not further discussed for reasons described above. 
+
+(Technical note: Since we did not ascertain how to implement robustification of standard errors obtained through pggls, inferential results based on pggls-estimations obtained in this assignment should be read under the caveat of incorrect variance estimation.)
 
 ```{r}
-waldtest(mundlak1, c(9:16))
-waldtest(mundlak2, c(9:16))
-```
-(viii) What are your overall conclusions from the analysis of heterogeneity in returns to schooling
-by ethnicity?\\
+mundlak_pggls <- pggls(lnearnings ~ school + age + agesq + ethblack + I(ethblack  * school) + urban + regne + regnc + regw + asvabc + mean_school+ mean_age + mean_agesq + I(ethblack*mean_school) + mean_urban + mean_regne + mean_regnc + mean_regw, model = "random", index = c("id"), effect = "individual", data=data)
 
-1. Hausmant test and wald test indicate correlation between fixed effects and regressors. So we should use the fixed effects model. Our estimations have shown that the interaction effect between schooling and being black is significant and negative. So there evidence for discrimination on the labour market. etc.
+fixed_oneway_pggls <- pggls(lnearnings ~ school + age + agesq + ethblack + I(ethblack  * school) + urban + regne + regnc + regw + asvabc, model = "within", index = c("id"), effect = "individual", data=data)
+
+screenreg(list(mundlak_pggls, fixed_oneway_pggls), digits=3, single.row=TRUE)
+```
+
+```{r}
+waldtest(mundlak_plm, c(9:16))
+waldtest(mundlak_pggls, c(9:16))
+```
+
+However, both estimation techniques yield the same conclusion once a Wald test is applied to test the joint significance of all coefficients in $\gamma$. In both cases there is very significant evidence against the null hypothesis $H_0: \gamma=0$ so that we can reject the null hypothesis of random effects. As one would expect, this is in line with the result of the Hausman test discussed above. Therefore, we conclude that the random effects mode is inconsistent for the panel data at hand, so that any inferences towards heterogeneity of schooling effects should be based on a fixed effect mode here. 
+
+To further robustify this conclusion, one should note that the Mundlak-model above is specified for the case of one-way fixed individual effects, while the preceding model specification and Hausman test results presume two-way fixed effects across individuals and time. Therefore, we also estimated the two-way Mundlak model as suggested by Wooldrige (2021), where $\bar{X}_t$ includes means over indivduals for all time-variant regressors:
+
+$$
+Y_{it}=X_{it}^\prime\beta+\left(\bar{X}_i \space \bar{X}_t \right)\gamma+\omega_i+U_{it}
+$$
+To avoid collinearity probolems in estimation, (fesible) GLS results are obtained using the pggls function and yield the same conclusion towards the inconsistency of random effects estimation upon investigation of the Wald-test results. 
+
+(Technical note: for reasons unknown to the uncensored sloths exclusion of incomplete observations was necessary to perform the Wald test on the two-way Mundlak-model.) 
+
+```{r}
+data <- data %>%
+  group_by(time) %>%
+  mutate(mean_school_t = mean(school),
+         mean_age_t = mean(age),
+         mean_agesq_t = mean(agesq),
+         mean_asvabc_t = mean(asvabc),
+         mean_urban_t = mean(urban),
+         mean_regne_t = mean(regne),
+         mean_regnc_t = mean(regnc),
+         mean_regw_t = mean(regw))
+
+datafull <- na.omit(data)
+
+mundlak_twoway <- pggls(lnearnings ~ school + age + agesq + ethblack + I(ethblack  * school) + urban + regne + regnc + regw + asvabc + mean_school+ mean_age + mean_agesq + I(ethblack*mean_school) + mean_urban + mean_regne + mean_regnc + mean_regw + mean_school_t + mean_age_t + mean_agesq_t + I(ethblack*mean_school_t) + mean_urban_t + mean_regne_t + mean_regnc_t + mean_regw_t, model = "random", index = c("id"), effect = "individual", data=datafull)
+
+screenreg(list(mundlak_twoway, fixed), digits=3, single.row=TRUE)
+waldtest(mundlak_twoway, c(9:24))
+```
+
+(viii) What are your overall conclusions from the analysis of heterogeneity in returns to schooling by ethnicity? 
+
+As discussed above, the Hausmant test and Wald test(s) indicate clearly provide evidence for incosistency of random effects estimation so that the analysis of heterogeneity in returns to schooling should be based on the specified fixed effects model. Although this precludes identification of the effect of black ethnicity on wages, this does not pose a problem for the research question which is concerned with the identified cross effect of schooling and ethnicity. Fixed effects estimation suggests that this interaction effect between schooling and black ethnicity is significant and negative, so that the returns to schooling are lower for people of colour classified as black here. Based on this fiding one can conlcude that there is evidence for discrimination by ethnicity on the labour market, which awards schooling less so for people of colour. Furthermore, one could conclude that there may be some discriminatory notion in schooling itself so that people of colour on average obtain education which is of lower quality and thus less rewarded on the labour market.
 
 (ix) To gain insights on the impact of nonresponse and attrition, the researcher applies a variant
 of the Verbeek and Nijman-test. He defines the dummy variable $d_i$ which is 1 if the individual
 is in the panel for more than 5 waves, and is zero otherwise. Apply the Verbeek and Nijman
 test with this definition of $d_i$ (otherwise equal to the definition in the lecture slides). Draw
-conclusions and address practical problems you possibly met in implementing the test.\\
+conclusions and address practical problems you possibly met in implementing the test. 
 
 ```{r}
 data <- data %>% group_by(id) %>%
@@ -231,11 +304,20 @@ fixedbalanced$vcov <- vcovHC(fixedbalanced, cluster="group")
 
 phtest(fixed, fixedbalanced)
 ```
+ To test attrition bias in panel data, we estimate the model once with an unbalanced panel and once with a balanced panel where we only include data on individuals who participated in more than five waves. The test itself is a Hausman type test based on $\hat{\beta}_{balanced} -\hat{\beta}_{unbalanced}$.
+ 
+Generally, we already had practical problems all along with the Hausman test as we estimated robust standard errors but they are not automatically included in the estimated model. Hence, we substituted the covariance matrix of the model with the covariance matrix containing the robust standard errors.
 
-We already had practical problems all along. The question is how to include robust standard errors in the Hausmantest.
-P value is very high so we can reject $H_0$. Hence, there is no evidence for attrition bias. As the estimation with the unbalanced data is more efficient, we should use that one.
+As the p-value is around 0.6872, we cannot reject the null hypothesis, indicating that there is no attrition bias. As the estimation with the unbalanced data is more efficient, one should proceed with the unbalanced panel data. 
 
 \clearpage
 
 # References
 
+Abadie, A., Athey, S., Imbens, G. W., & Wooldridge, J. (2017). When should you adjust standard errors for clustering? (No. w24003). National Bureau of Economic Research.
+
+Cameron, A. C., & Trivedi, P. K. (2005). Microeconometrics: methods and applications. 10th edition, Cambridge university press.
+
+Wooldridge, J. (2021). Two-way fixed effects, the two-way mundlak regression, and difference-in-differences estimators.
+
+Maru, Taroh (2015). Model Diagnostic Exercises. Online: http://tarohmaru.web.fc2.com/R/ExerciseDiagnostics.html [16.01.2022].

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (MiKTeX 21.6) (preloaded format=pdflatex 2021.9.26)  16 JAN 2022 13:19
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (MiKTeX 21.6) (preloaded format=pdflatex 2021.9.26)  16 JAN 2022 17:13
 entering extended mode
 **./assignment_2.tex
 (assignment_2.tex
@@ -543,35 +543,36 @@ LaTeX Font Info:    Trying to load font information for U+msb on input line 113
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 ) (C:\Users\Anna\AppData\Local\Programs\MiKTeX\tex/latex/microtype\mt-msb.cfg
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
-) [1
+)
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <10> on input line 129.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <7> on input line 129.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <5> on input line 129.
+[1
 
 {C:/Users/Anna/AppData/Local/MiKTeX/pdftex/config/pdftex.map}]
 LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 1
-69.
+87.
 (C:\Users\Anna\AppData\Local\Programs\MiKTeX\tex/latex/lm\t1lmtt.fd
 File: t1lmtt.fd 2009/10/30 v1.6 Font defs for Latin Modern
-)
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 182.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 182.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 182.
-LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 3
-11.
-(C:\Users\Anna\AppData\Local\Programs\MiKTeX\tex/latex/lm\ts1lmr.fd
-File: ts1lmr.fd 2009/10/30 v1.6 Font defs for Latin Modern
 ) [2
 
-] [3] [4] [5] [6] [7]
+] [3] [4] [5] [6]
+LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 6
+01.
+(C:\Users\Anna\AppData\Local\Programs\MiKTeX\tex/latex/lm\ts1lmr.fd
+File: ts1lmr.fd 2009/10/30 v1.6 Font defs for Latin Modern
+) [7] [8] [9]
 LaTeX Font Info:    Trying to load font information for TS1+lmtt on input line 
-643.
+804.
 (C:\Users\Anna\AppData\Local\Programs\MiKTeX\tex/latex/lm\ts1lmtt.fd
 File: ts1lmtt.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
 LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <10> not available
-(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 676.
-[8] [9] [10] [11] [12
+(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 818.
+[10] [11] [12] [13] [14] [15] [16
 
 ] (assignment_2.aux)
 
@@ -579,34 +580,36 @@ LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 13347 strings out of 478864
- 202615 string characters out of 2849134
- 575124 words of memory out of 3000000
+ 13384 strings out of 478864
+ 202994 string characters out of 2849134
+ 568061 words of memory out of 3000000
  30900 multiletter control sequences out of 15000+600000
- 452859 words of font info for 119 fonts, out of 8000000 for 9000
+ 454270 words of font info for 136 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 74i,10n,80p,1212b,495s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 74i,10n,80p,1645b,503s stack positions out of 5000i,500n,10000p,200000b,80000s
 {C:/Users/Anna/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ec.enc}{C:
 /Users/Anna/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ts1.enc}{C:/Use
-rs/Anna/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.enc}{C:/User
+rs/Anna/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathex.enc}{C:/User
 s/Anna/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.enc}{C:/Users
-/Anna/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}<C:/Users/Anna
-/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx12.pfb><C:/Users/Anna/
-AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi10.pfb><C:/Users/Anna/A
-ppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi7.pfb><C:/Users/Anna/App
-Data/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr10.pfb><C:/Users/Anna/AppDa
-ta/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr12.pfb><C:/Users/Anna/AppData
-/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr17.pfb><C:/Users/Anna/AppData/L
-ocal/Programs/MiKTeX/fonts/type1/public/lm/lmr7.pfb><C:/Users/Anna/AppData/Loca
-l/Programs/MiKTeX/fonts/type1/public/lm/lmri10.pfb><C:/Users/Anna/AppData/Local
-/Programs/MiKTeX/fonts/type1/public/lm/lmsy10.pfb><C:/Users/Anna/AppData/Local/
-Programs/MiKTeX/fonts/type1/public/lm/lmsy7.pfb><C:/Users/Anna/AppData/Local/Pr
-ograms/MiKTeX/fonts/type1/public/lm/lmtk10.pfb><C:/Users/Anna/AppData/Local/Pro
-grams/MiKTeX/fonts/type1/public/lm/lmtt10.pfb><C:/Users/Anna/AppData/Local/Prog
-rams/MiKTeX/fonts/type1/public/lm/lmtti10.pfb>
-Output written on assignment_2.pdf (12 pages, 277726 bytes).
+/Anna/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}{C:/Users/Anna
+/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.enc}<C:/Users/Anna/
+AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx12.pfb><C:/Users/Anna/A
+ppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmex10.pfb><C:/Users/Anna/Ap
+pData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi10.pfb><C:/Users/Anna/App
+Data/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi7.pfb><C:/Users/Anna/AppDa
+ta/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr10.pfb><C:/Users/Anna/AppData
+/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr12.pfb><C:/Users/Anna/AppData/L
+ocal/Programs/MiKTeX/fonts/type1/public/lm/lmr17.pfb><C:/Users/Anna/AppData/Loc
+al/Programs/MiKTeX/fonts/type1/public/lm/lmr7.pfb><C:/Users/Anna/AppData/Local/
+Programs/MiKTeX/fonts/type1/public/lm/lmri10.pfb><C:/Users/Anna/AppData/Local/P
+rograms/MiKTeX/fonts/type1/public/lm/lmsy10.pfb><C:/Users/Anna/AppData/Local/Pr
+ograms/MiKTeX/fonts/type1/public/lm/lmsy7.pfb><C:/Users/Anna/AppData/Local/Prog
+rams/MiKTeX/fonts/type1/public/lm/lmtk10.pfb><C:/Users/Anna/AppData/Local/Progr
+ams/MiKTeX/fonts/type1/public/lm/lmtt10.pfb><C:/Users/Anna/AppData/Local/Progra
+ms/MiKTeX/fonts/type1/public/lm/lmtti10.pfb>
+Output written on assignment_2.pdf (16 pages, 312702 bytes).
 PDF statistics:
- 175 PDF objects out of 1000 (max. 8388607)
- 36 named destinations out of 1000 (max. 500000)
+ 202 PDF objects out of 1000 (max. 8388607)
+ 39 named destinations out of 1000 (max. 500000)
  26649 words of extra memory for PDF output out of 29859 (max. 10000000)
 
