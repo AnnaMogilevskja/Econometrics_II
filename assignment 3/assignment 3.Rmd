@@ -152,12 +152,12 @@ k=4
 q=0.8
 alpha=0.05
 
-n1 <- length(data$treatment[data$treatment  == 0])
-n2 <- length(data$treatment[data$treatment  == 1])
+n <- length(data$treatment)
+n1 <- length(data$treatment[data$treatment  == 1])
 
 t_alpha <- qt(p=alpha/2, df=n-k, lower.tail=FALSE)
 t_q <- qt(p=q, df=n-k, lower.tail=TRUE) # denk nochmal drüber nach
-p = n2/(n1+n2)
+p1 = n1/n
 
 #Residual Standard error (Like Standard Deviation)
 k=length(model4$coefficients)-1 #Subtract one to ignore intercept
@@ -165,14 +165,38 @@ SSE=sum(model4$residuals**2)
 m=length(model4$residuals)
 sigma = sqrt(SSE/(m-(1+k))) #Residual Standard Error
 
-MDE_fruit = (t_alpha - t_q)*sqrt(1/(p*(1-p)))*sqrt(sigma^2/(n1+n2))
+MDE_fruit = (t_alpha - t_q)*sqrt(1/(p1*(1-p1)))*sqrt(sigma^2/n)
+
+# Candybar
+
+n2 <- length(data$treatment[data$treatment  == 2])
+p2 = n2/n
+
+MDE_candy = (t_alpha - t_q)*sqrt(1/(p2*(1-p2)))*sqrt(sigma^2/(n))
+
+print(MDE_fruit)
+print(MDE_candy)
 ```
 
 
 (vi) Initially, the researcher expected that no pupil would lie if there is nothing at stake (control group) and that a quarter of the student lie for a candy bar. How large should the sample size of the experiment have been in that case?
+
 ```{r}
-samplesize = ((t_alpha - t_q)/MDE_candy)^2*(sigma^2/(p*(1-p))
+MDE_target = 0.25*(1 - (1/6))
+samplesize = ((t_alpha - t_q)/MDE_target)^2*((sigma^2)/(p2*(1-p2)))
+print(samplesize)
 ```
 
+Note: same df used as above to not have to iteratively solve it (only margignal difference)
 
 (vii) Students assigned to the control group provide counterfactuals to both the fruit and the candy bar treatment. Show that by assigning more students to the control group than to each treatment group the same MDE can be achieved with fewer students in the experiment.
+
+```{r}
+p1_new = p1+0.1
+p2_new = p2+0.1
+n_1 = ((t_alpha - t_q)/MDE_fruit)^2*(sigma^2)/(p1_new*(1-p1_new))
+n_2 = ((t_alpha - t_q)/MDE_candy)^2*(sigma^2)/(p2_new*(1-p2_new))
+samplesize = max(n_1,n_2)
+print(samplesize)
+```
+??? Assignment wants to increase treatment, but function is minimal for p=0.5, which also makes no sense, since then no one is in the control so there must be a fundamental mistake in how we calculate the stuff, uff
