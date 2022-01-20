@@ -1,0 +1,178 @@
+---
+title: "Econometrics II - Assignment 3"
+author: "Uncensored sloths"
+date: "20 Jan 2022"
+output:
+  pdf_document:
+    includes:
+      in_header: "preamble.tex"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(RCT)
+library(dplyr)
+library(magrittr)
+library(lmtest)
+library(stargazer)
+library(lmtest)
+library(sandwich)
+library(powerMediation)
+```
+
+# Question 1
+
+(i) Compute for each of the colors the treatment effect.
+
+(ii) Compute the average treatment effect in the full population.
+
+(iii) Compute the average treatment effect on the treated.
+
+(iv) Give an example where the average treatment effect on the treated would be more useful to consider than the average treatment effect, and explain why.
+
+# Question 2
+
+```{r}
+# Load data
+data <- read.csv("assignment3.csv")
+
+data$important[data$important == "sport"] <- 0
+data$important[data$important == "school"] <- 1
+data$better[data$better == "Math"] <- 1
+data$better[data$better == "Language"] <- 0
+data$preferredhand[data$preferredhand == "Left"] <- 1
+data$preferredhand[data$preferredhand == "Right"] <- 0
+
+```
+
+```{r}
+data$treatment [data$treatment  == "Nothing"] <- 0
+data$treatment [data$treatment  == "Candybar"] <- 2
+data$treatment [data$treatment  == "Fruit"] <- 1
+
+data$important[data$important == ""] <- NA
+
+data %<>% 
+      mutate_each(funs(if(is.character(.)) as.integer(.) else .))
+```
+
+(i) Compute the fraction of pupils in all three groups (control, fruit, and candy bar) that have the number correct and that are expected to lie. Show within a table whether pupil characteristics are balanced over the treatment groups.
+
+
+```{r}
+balance <- balance_table(data[, !names(data) %in% "id"], "treatment")
+balance
+```
+```{r}
+fraction_nothing <- (balance[2, 2]-(1/6))/(1- (1/6))
+fraction_fruit <- (balance[2, 3]-(1/6))/(1- (1/6))
+fraction_candybar <-(balance[2, 4]-(1/6))/(1- (1/6))
+fractions <- cbind(fraction_nothing, fraction_fruit, fraction_candybar)
+fractions
+```
+
+```{r}
+data$treatment_fruit [data$treatment  == 0] <- 0
+data$treatment_fruit [data$treatment  == 2] <- 0
+data$treatment_fruit [data$treatment  == 1] <- 1
+data$treatment_candy [data$treatment  == 0] <- 0
+data$treatment_candy [data$treatment  == 2] <- 1
+data$treatment_candy [data$treatment  == 1] <- 0
+```
+
+
+(ii) Use the linear probability model to regress the dummy variable for having the correct number on the dice on the assignment to the three treatment groups. Do you detect significant lying? Show how robust you results are to including additional covariates.
+
+```{r}
+model1 <- lm(correct ~ treatment_fruit + treatment_candy, data = data)
+model1_robust <- coeftest(model1, vcov = vcovHC, type = "HC1")
+model1_robust
+```
+they are not significantly different from $\alpha$ 
+
+```{r}
+t.test(subset(data, treatment == 0)$correct, y = NULL,
+       alternative = c("greater"),
+       mu = 1/6, paired = FALSE, var.equal = FALSE,
+       conf.level = 0.95)
+```
+```{r}
+t.test(subset(data, treatment == 1)$correct, y = NULL,
+       alternative = c("greater"),
+       mu = 1/6, paired = FALSE, var.equal = FALSE,
+       conf.level = 0.95)
+```
+
+```{r}
+t.test(subset(data, treatment == 2)$correct, y = NULL,
+       alternative = c("greater"),
+       mu = 1/6, paired = FALSE, var.equal = FALSE,
+       conf.level = 0.95)
+```
+```{r}
+model2 <- lm(correct ~ treatment_fruit + treatment_candy + gender + grade +  important + better + preferredhand + siblings + youngestchild + oftenexpelled, data = data)
+model2_robust <- coeftest(model2, vcov = vcovHC, type = "HC1")
+model2_robust
+```
+
+```{r}
+model3 <- lm(correct ~ treatment_fruit + treatment_candy + gender + better + preferredhand + siblings + youngestchild + oftenexpelled, data = data)
+model3_robust <- coeftest(model3, vcov = vcovHC, type = "HC1")
+model3_robust
+```
+
+```{r}
+model4 <- lm(correct ~ treatment_fruit + treatment_candy + gender, data = data)
+model4_robust <- coeftest(model4, vcov = vcovHC, type = "HC1")
+model4_robust
+```
+
+(iii) The researcher is interested in testing if boys and girls behave differently. Write down and estimate a model that can test if boys lie more than girls and whether boys and girls respond differently to incentives (e.g. treatment).
+
+```{r}
+model5 <- lm(correct ~ treatment_fruit + treatment_candy + gender*treatment_fruit + gender*treatment_candy, data = data)
+model5_robust <- coeftest(model5, vcov = vcovHC, type = "HC1")
+model5_robust
+```
+
+
+
+(iv) Estimate your preferred model specification (including pupil characteristics if this improves your model) and write down your main conclusions.
+Prior to conducting the experiment, the researcher performed some power calculations.
+
+treatments and gender, no interaction effect
+children just always lie
+
+
+(v) Given the sample size and the estimates you have obtained above, what would be the minimum detectable effect size of this experiment?
+
+```{r}
+# Fruit
+k=4
+q=0.8
+alpha=0.05
+
+n1 <- length(data$treatment[data$treatment  == 0])
+n2 <- length(data$treatment[data$treatment  == 1])
+
+t_alpha <- qt(p=alpha/2, df=n-k, lower.tail=FALSE)
+t_q <- qt(p=q, df=n-k, lower.tail=TRUE) # denk nochmal drüber nach
+p = n2/(n1+n2)
+
+#Residual Standard error (Like Standard Deviation)
+k=length(model4$coefficients)-1 #Subtract one to ignore intercept
+SSE=sum(model4$residuals**2)
+m=length(model4$residuals)
+sigma = sqrt(SSE/(m-(1+k))) #Residual Standard Error
+
+MDE_fruit = (t_alpha - t_q)*sqrt(1/(p*(1-p)))*sqrt(sigma^2/(n1+n2))
+```
+
+
+(vi) Initially, the researcher expected that no pupil would lie if there is nothing at stake (control group) and that a quarter of the student lie for a candy bar. How large should the sample size of the experiment have been in that case?
+```{r}
+samplesize = ((t_alpha - t_q)/MDE_candy)^2*(sigma^2/(p*(1-p))
+```
+
+
+(vii) Students assigned to the control group provide counterfactuals to both the fruit and the candy bar treatment. Show that by assigning more students to the control group than to each treatment group the same MDE can be achieved with fewer students in the experiment.
