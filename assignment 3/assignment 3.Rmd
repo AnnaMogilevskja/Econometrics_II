@@ -17,6 +17,7 @@ library(lmtest)
 library(stargazer)
 library(lmtest)
 library(sandwich)
+library(estimatr)
 ```
 
 # Question 1
@@ -90,6 +91,16 @@ model1_robust <- coeftest(model1, vcov = vcovHC, type = "HC1")
 model1_robust
 ```
 they are not significantly different from $\alpha$ 
+```{r}
+lh_robust(correct ~ treatment_fruit + treatment_candy, data = data, linear_hypothesis = "(Intercept) = 0.167")
+```
+```{r}
+lh_robust(correct ~ treatment_fruit + treatment_candy, data = data, linear_hypothesis = "treatment_fruit = 0")
+```
+
+```{r}
+lh_robust(correct ~ treatment_fruit + treatment_candy, data = data, linear_hypothesis = "treatment_candy = 0")
+```
 
 ```{r}
 t.test(subset(data, treatment == 0)$correct, y = NULL,
@@ -163,29 +174,21 @@ q=0.8
 alpha=0.05
 
 n <- length(data$treatment)
-n1 <- length(data$treatment[data$treatment  == 1])
+m <- length(data$treatment[!data$treatment  == 0])
 
 t_alpha <- qt(p=alpha/2, df=n-k, lower.tail=FALSE)
-t_q <- qt(p=q, df=n-k, lower.tail=TRUE) # denk nochmal drüber nach
-p1 = n1/n
+t_q <- qt(p=q, df=n-k, lower.tail=FALSE) 
+p = m/n
 
 #Residual Standard error (Like Standard Deviation)
 k=length(model4$coefficients)-1 #Subtract one to ignore intercept
 SSE=sum(model4$residuals**2)
-m=length(model4$residuals)
-sigma = sqrt(SSE/(m-(1+k))) #Residual Standard Error
+t=length(model4$residuals)
+sigma = sqrt(SSE/(t-(1+k))) #Residual Standard Error
 
-MDE_fruit = (t_alpha - t_q)*sqrt(1/(p1*(1-p1)))*sqrt(sigma^2/n)
+MDE = (t_alpha - t_q)*sqrt(1/(p*(1-p)))*sqrt(sigma^2/n)
 
-# Candybar
-
-n2 <- length(data$treatment[data$treatment  == 2])
-p2 = n2/n
-
-MDE_candy = (t_alpha - t_q)*sqrt(1/(p2*(1-p2)))*sqrt(sigma^2/(n))
-
-print(MDE_fruit)
-print(MDE_candy)
+MDE
 ```
 
 
@@ -193,20 +196,36 @@ print(MDE_candy)
 
 ```{r}
 MDE_target = 0.25*(1 - (1/6))
-samplesize = ((t_alpha - t_q)/MDE_target)^2*((sigma^2)/(p2*(1-p2)))
+samplesize = ((t_alpha - t_q)/MDE_target)^2*((sigma^2)/(p*(1-p)))
 print(samplesize)
 ```
 
-Note: same df used as above to not have to iteratively solve it (only margignal difference)
+Note: same df used as above to not have to iteratively solve it (only marginal difference)
 
 (vii) Students assigned to the control group provide counterfactuals to both the fruit and the candy bar treatment. Show that by assigning more students to the control group than to each treatment group the same MDE can be achieved with fewer students in the experiment.
 
 ```{r}
-p1_new = p1+0.1
-p2_new = p2+0.1
-n_1 = ((t_alpha - t_q)/MDE_fruit)^2*(sigma^2)/(p1_new*(1-p1_new))
-n_2 = ((t_alpha - t_q)/MDE_candy)^2*(sigma^2)/(p2_new*(1-p2_new))
-samplesize = max(n_1,n_2)
-print(samplesize)
+p2 <- 0.5
+new_size = ((t_alpha - t_q)/MDE)^2 * (sigma^2)/(p2*(1-p2))
+new_size
+```
+
+
+```{r}
+p1 <- seq.int(from = 0, to = 1, by=0.01)
+n1 <- list()
+
+for (i in 1:length(p1)){
+  n1[i] = ((t_alpha - t_q)/MDE)^2 * (sigma^2)/(p1[i]*(1-p1[i]))
+}
+
+p1 <- as.list(p1)
+sampsize = data.frame(unlist(p1),unlist(n1))
+names(sampsize) <- c("p1", "n1")
+sampsize[,2] <- as.numeric(sampsize[,2])
+sampsize <- sampsize[c(-1,-101), ]
+
+plot(sampsize$p1,sampsize$n1, type="l")
+abline(h=length(data$treatment), col="red")
 ```
 ??? Assignment wants to increase treatment, but function is minimal for p=0.5, which also makes no sense, since then no one is in the control so there must be a fundamental mistake in how we calculate the stuff, uff
