@@ -24,11 +24,31 @@ library(estimatr)
 
 (i) Compute for each of the colors the treatment effect.
 
+The average treatment effects of each color can be estimated by taking the difference between the average outcome of treated and the average outcome of the control group. Hence, the average treatment effect of purple is $2$, the average treatment effect of blue is $5$ and the average treatment effect of green is $1$.
+
 (ii) Compute the average treatment effect in the full population.
+
+To compute the average treatment, we weigh the average treatments per group with their proportion within the data:
+
+```{r}
+0.5*2+0.25*5+0.25*1
+```
+
 
 (iii) Compute the average treatment effect on the treated.
 
+To compute the average treatment effect on the treated, we weigh the average effect of all colors (treated and control) with the distribution of the treated group and take the difference between the treatment and control group:
+
+```{r}
+(100*9+ 75*13 + 25*10)/200 - (100*7 + 75*8 + 25*9)/200
+```
+
+
 (iv) Give an example where the average treatment effect on the treated would be more useful to consider than the average treatment effect, and explain why.
+
+In general, it makes sense to differentiate between the average treatment effect and the average treatment of effect of the treated when the assignment is not fully random as the $ATE$ and $ATET$ will not be the same as a result. 
+
+The average treatment effect on the treated is more applicable when we want to now the effect of a treatment on the treated group. For example, when conduction cost-benefit analysis of a treatment, we are interested to know whether the effect is sufficient given the costs such as in job support programs where we want to know whether the support measures helped the participants to gain a job. Another situation is the effect of medication where we are interested to know whether a certain medicine helped the participants or not. 
 
 # Question 2
 
@@ -82,25 +102,20 @@ data$treatment_candy [data$treatment  == 2] <- 1
 data$treatment_candy [data$treatment  == 1] <- 0
 ```
 
+As the table shows, the characteristics are not fully balanced at important, grade and siblings (but not at a high significance level.)
 
 (ii) Use the linear probability model to regress the dummy variable for having the correct number on the dice on the assignment to the three treatment groups. Do you detect significant lying? Show how robust you results are to including additional covariates.
 
 ```{r}
 model1 <- lm(correct ~ treatment_fruit + treatment_candy, data = data)
 model1_robust <- coeftest(model1, vcov = vcovHC, type = "HC1")
-model1_robust
 ```
 they are not significantly different from $\alpha$ 
 ```{r}
-lh_robust(correct ~ treatment_fruit + treatment_candy, data = data, linear_hypothesis = "(Intercept) = 0.167")
-```
-```{r}
-lh_robust(correct ~ treatment_fruit + treatment_candy, data = data, linear_hypothesis = "treatment_fruit = 0")
+lh_robust(correct ~ treatment_fruit + treatment_candy, data = data, linear_hypothesis = 
+            "(Intercept) = 0.167")
 ```
 
-```{r}
-lh_robust(correct ~ treatment_fruit + treatment_candy, data = data, linear_hypothesis = "treatment_candy = 0")
-```
 
 ```{r}
 t.test(subset(data, treatment == 0)$correct, y = NULL,
@@ -123,52 +138,62 @@ t.test(subset(data, treatment == 2)$correct, y = NULL,
        conf.level = 0.95)
 ```
 
-```{r}
-model2 <- lm(correct ~ treatment_fruit + treatment_candy + gender + grade +  important + better + preferredhand + siblings + youngestchild + oftenexpelled, data = data)
-model2_robust <- coeftest(model2, vcov = vcovHC, type = "HC1")
-model2_robust
-```
 
 ```{r}
-model3 <- lm(correct ~ treatment_fruit + treatment_candy + gender + better + preferredhand + siblings + youngestchild + oftenexpelled, data = data)
-model3_robust <- coeftest(model3, vcov = vcovHC, type = "HC1")
-model3_robust
+lh_robust(correct ~ treatment_fruit + treatment_candy + gender + grade +  important + better + preferredhand + siblings + youngestchild + oftenexpelled, data = data, linear_hypothesis = 
+            "(Intercept) = 0.167")
 ```
+```{r}
+lh_robust(correct ~ treatment_fruit + treatment_candy + grade +  important + siblings, data = data, linear_hypothesis = 
+            "(Intercept) = 0.167")
+```
+
 
 ```{r}
-model4 <- lm(correct ~ treatment_fruit + treatment_candy + gender, data = data)
-model4_robust <- coeftest(model4, vcov = vcovHC, type = "HC1")
-model4_robust
+lh_robust(correct ~ treatment_fruit + treatment_candy + gender, data = data, linear_hypothesis = 
+            "(Intercept) = 0.167")
 ```
 
+
+The intercept is significantly different from $\frac{1}{6}$, therefore, children tend to lie either way. The estimations of the treatment effects are not significantly different from the intercept. Hence, the treatment does not influence behaviour too much and still lie. We of course, added robust standard errors because the outcome variable is binar, hence is heteroskedastic by nature. 
+
+We estimated a model only with the treatment effects, with all covariates, with the random covariates and with gender. Gender is significant while the other covariates are not.
 We tried adding different covariates. However, except for gender no covariate was significant and additionally led to higher standard errors. The same happens if one includes combinations of covariates into the model as shown in the second and third model.
 
 (iii) The researcher is interested in testing if boys and girls behave differently. Write down and estimate a model that can test if boys lie more than girls and whether boys and girls respond differently to incentives (e.g. treatment).
 
-```{r}
-model4_robust
-```
-In the model including gender as a regressors, we can see that gender is significant at $10\%$ and negative. As the gender dummy equals 1 for girlst, we can conclude that there is weakly significant effect and the girls tend to lie less than boys.
+
+In the model including gender as a regressors, we can see that gender is significant at $10\%$ and negative. As the gender dummy equals 1 for girlst, we can conclude that there is weakly significant effect and the girls tend to lie less than boys. However, between the treatments there are no significant differences between gender.
 
 ```{r}
-model5 <- lm(correct ~ treatment_fruit + treatment_candy + gender*treatment_fruit + gender*treatment_candy, data = data)
-model5_robust <- coeftest(model5, vcov = vcovHC, type = "HC1")
-model5_robust
+lh_robust(correct ~ treatment_fruit + treatment_candy + gender*treatment_fruit + gender*treatment_candy, data = data, linear_hypothesis = 
+            "(Intercept) = 0.167")
 ```
 
 
 
 (iv) Estimate your preferred model specification (including pupil characteristics if this improves your model) and write down your main conclusions.
-Prior to conducting the experiment, the researcher performed some power calculations.
+
+```{r}
+lh_robust(correct ~ treatment_fruit + treatment_candy + gender, data = data, linear_hypothesis = 
+            "(Intercept) = 0.167")
+```
 
 treatments and gender, no interaction effect
 children just always lie
+- they assume that they get something either way - question is did the research tell them that they will not get anything or did they leave the possibility open
+- children could have fun lying to children
+- maybe children did not like the researcher or they tend to lie to strangers (although research shows more the other way around - find paper)
+- competitive environment among children - did the children knew about the participation of other children?
 
 
 (v) Given the sample size and the estimates you have obtained above, what would be the minimum detectable effect size of this experiment?
 
+explain parameter
+
 ```{r}
-# Fruit
+model4 <- lm(correct ~ treatment_fruit + treatment_candy + gender, data = data)
+
 k=4 
 q=0.8
 alpha=0.05
@@ -193,6 +218,8 @@ MDE
 
 
 (vi) Initially, the researcher expected that no pupil would lie if there is nothing at stake (control group) and that a quarter of the student lie for a candy bar. How large should the sample size of the experiment have been in that case?
+
+add explaination to MDE_target
 
 ```{r}
 MDE_target = 0.25*(1 - (1/6))
@@ -228,4 +255,4 @@ sampsize <- sampsize[c(-1,-101), ]
 plot(sampsize$p1,sampsize$n1, type="l")
 abline(h=length(data$treatment), col="red")
 ```
-??? Assignment wants to increase treatment, but function is minimal for p=0.5, which also makes no sense, since then no one is in the control so there must be a fundamental mistake in how we calculate the stuff, uff
+describe graph
