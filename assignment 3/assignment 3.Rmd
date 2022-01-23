@@ -1,7 +1,7 @@
 ---
 title: "Econometrics II - Assignment 3"
 author: "Uncensored sloths"
-date: "20 Jan 2022"
+date: "23 Jan 2022"
 output:
   pdf_document:
     includes:
@@ -18,17 +18,18 @@ library(stargazer)
 library(lmtest)
 library(sandwich)
 library(estimatr)
+library(MASS)
 ```
 
 # Question 1
 
 (i) Compute for each of the colors the treatment effect.
 
-The average treatment effects of each color can be estimated by taking the difference between the average outcome of treated and the average outcome of the control group. Hence, the average treatment effect of purple is $2$, the average treatment effect of blue is $5$ and the average treatment effect of green is $1$.
+The average treatment effects of each color can be estimated by taking the difference between the average outcome of the treatment group and the average outcome of the control group. Hence, the average treatment effect of purple is $2$, the average treatment effect of blue is $5$ and the average treatment effect of green is $1$.
 
 (ii) Compute the average treatment effect in the full population.
 
-To compute the average treatment, we weigh the average treatments per group with their proportion within the data:
+To compute the average treatment, we weigh the average treatments per color with their proportion within the data:
 
 ```{r}
 0.5*2+0.25*5+0.25*1
@@ -46,9 +47,11 @@ To compute the average treatment effect on the treated, we weigh the average eff
 
 (iv) Give an example where the average treatment effect on the treated would be more useful to consider than the average treatment effect, and explain why.
 
-In general, it makes sense to differentiate between the average treatment effect and the average treatment of effect of the treated when the assignment is not fully random as the $ATE$ and $ATET$ will not be the same as a result. 
+In general, it makes sense to differentiate between the average treatment effect and the average treatment of effect of the treated when the assignment of treatment is not fully random as the $ATE$ and $ATET$ will not be equal as a result. 
 
-The average treatment effect on the treated is more applicable when we want to now the effect of a treatment on the treated group. For example, when conduction cost-benefit analysis of a treatment, we are interested to know whether the effect is sufficient given the costs such as in job support programs where we want to know whether the support measures helped the participants to gain a job. Another situation is the effect of medication where we are interested to know whether a certain medicine helped the participants or not. 
+The average treatment effect on the treated is more applicable when we want to now the effect of a treatment on the treated group. For example, when we conduct a cost-benefit analysis of a treatment, we are interested to know whether the effect is sufficient given the costs such as in job support program. In this case, we want to know whether the support measures helped the participants to gain a job. Another situation is the effect of medication where we are interested to know whether a certain medicine helped the participants or not. 
+
+However, why do even have to differentiate between $ATE$ and $ATET$? The reason is because these effects differ unless we have a fully random assignment of the treatment. But in reality we often have selection biases, because a certain type of people tends to participate in the treatment. If we invite unemployed individuals to participate in a program that is supposed to help them to get a job, it may happen that mostly only motivated individuals will decide to participate for instance. 
 
 # Question 2
 
@@ -56,10 +59,13 @@ The average treatment effect on the treated is more applicable when we want to n
 # Load data
 data <- read.csv("assignment3.csv")
 
-data$important[data$important == "sport"] <- 0
+# dummy for important: 0 for sport, 1 for school
+data$important[data$important == "sport"] <- 0 
 data$important[data$important == "school"] <- 1
+# dummy for better: 0 for language, 1 for math
 data$better[data$better == "Math"] <- 1
 data$better[data$better == "Language"] <- 0
+# dummy for preferred hand: 0 for right, 1 for left
 data$preferredhand[data$preferredhand == "Left"] <- 1
 data$preferredhand[data$preferredhand == "Right"] <- 0
 
@@ -83,7 +89,7 @@ data %<>%
 balance <- balance_table(data[, !names(data) %in% "id"], "treatment")
 balance
 ```
-For all three groups we can see that the average of correct numbers is above $\frac{1}{6}$ which is why calculate the fraction of pupils that lie using the given formula $\frac{x-\frac{1}{6}}{1-\frac{1}{6}}$:
+First, we compute the balancing table. For all three groups, we can see that the average of correct numbers is above $\frac{1}{6}$ which is why we use the given formula to calculate the fraction of pupils that lie:
 
 ```{r}
 fraction_nothing <- (balance[2, 2]-(1/6))/(1- (1/6))
@@ -93,29 +99,32 @@ fractions <- cbind(fraction_nothing, fraction_fruit, fraction_candybar)
 fractions
 ```
 
+As the results show, around $27.74\%$ of the pupils in the control group have a right number and are expected to lie. In the treatment group that receives a fruit it is around $23.45\%$ of the pupils and in the treatment group that receives candy it is around $29.41\%$.
+
 ```{r}
+# dummy treatment_fruit: 1 for fruit, 0 for the others
 data$treatment_fruit [data$treatment  == 0] <- 0
 data$treatment_fruit [data$treatment  == 2] <- 0
 data$treatment_fruit [data$treatment  == 1] <- 1
+# dummy treatment_candy: 1 for candy, 0 for the others
 data$treatment_candy [data$treatment  == 0] <- 0
 data$treatment_candy [data$treatment  == 2] <- 1
 data$treatment_candy [data$treatment  == 1] <- 0
 ```
 
-As the table shows, the characteristics are not fully balanced at important, grade and siblings (but not at a high significance level.)
+Looking at the balancing table, we can see that the not all pupil characteristics are balanced over the treatment groups. For gender, the preferred hand, being the youngest child, being often expelled and the prioritization of either school or sport, we have no significant imbalances among the control and treatment groups. However, in case of the grades, we observe that pupils of the treatment group that receives fruits are on average in a significantly higher grade (we assume that grade is the school year, not the mark) than the other pupils of the other groups. Further, children of the treatment group that receives candies rate sport more important on average at a significant level. Last but not least, having siblings also is unbalanced for the fruit treatment group as on average less pupils have a sibling in this treatment group. However, this imbalance is only significant at $10\%$. 
+
+Hence, we would like to point out that the experiment could have a potential non-random assignment of the treatment. While it appears to be a coincidence that in one treatment group pupils prioritize sport more on average and in the other treatment group, pupils are more often single children on average, there could be a potential non-random assignment based on the grades as the teachers or researchers may assigned the children to the treatment groups based on the grade they attend. However, as we do not have any information about the selection process we cannot make any further inferences on that matter.
 
 (ii) Use the linear probability model to regress the dummy variable for having the correct number on the dice on the assignment to the three treatment groups. Do you detect significant lying? Show how robust you results are to including additional covariates.
 
 ```{r}
-model1 <- lm(correct ~ treatment_fruit + treatment_candy, data = data)
-model1_robust <- coeftest(model1, vcov = vcovHC, type = "HC1")
-```
-they are not significantly different from $\alpha$ 
-```{r}
 lh_robust(correct ~ treatment_fruit + treatment_candy, data = data, linear_hypothesis = 
             "(Intercept) = 0.167")
 ```
+First, we estimate an OLS regression including the treatments as the only regressors. Note that we estimate robust standard errors as a binary outcome variable always involves heteroskedasticity. As the results show, the intercept is significant at $1\%$. Hence, we can reject the null hypothesis that the intercept equals $\frac{1}{6}$ and conclude that the children of the control group lie despite getting no treatment. As the estimations of the treatments are not significant, we can conclude that they do not behave substantially different from the control group. 
 
+When we test the significance using the data directly (we test whether the mean is significantly from $\frac{1}{6}$), we get similar results. Hence, in every group, there are pupils who lie: 
 
 ```{r}
 t.test(subset(data, treatment == 0)$correct, y = NULL,
@@ -138,39 +147,36 @@ t.test(subset(data, treatment == 2)$correct, y = NULL,
        conf.level = 0.95)
 ```
 
-
+When we include all available characeteristics of the pupils, we see that our intercept becomes insignificant. However, the estimation of the intercept only differs by around $0.047$ to the previous estimation. For the estimations of the treatments, we have different estimates than in the previous estimation (the estimates are almost twice as high as before). Therefore, our results are not robust when we include all covariates.
 ```{r}
 lh_robust(correct ~ treatment_fruit + treatment_candy + gender + grade +  important + better + preferredhand + siblings + youngestchild + oftenexpelled, data = data, linear_hypothesis = 
             "(Intercept) = 0.167")
 ```
+As we have imbalances among the treatment groups regarding grades, the prioritization and siblings, there might be difference between the treatment groups regarding their tendencies to lie which is why we also estimate a model including all these covariates. Again, our results are not robust as the intercept is lower than before and not significant. The estimations for the treatment effects also differ from the orginal estimation. Note, however, that neither of the included covariates is significant. We also estimated models where we included only on the three covariates, as well as paired combinations. However, we never could observe any significant effect which is why we would conclude that the imbalances do not affect the lying behavior among the treatment groups.
+
 ```{r}
 lh_robust(correct ~ treatment_fruit + treatment_candy + grade +  important + siblings, data = data, linear_hypothesis = 
             "(Intercept) = 0.167")
 ```
-
+Finally, we also estimated a model including gender. Again our estimates differ again from the original model, especially the estimate for treatment with candy. However, different from other estimations, the intercept is significant again. Moreover gender is significant at $10\%$, providing us with evidence that boys tend to lie more than girls.
 
 ```{r}
 lh_robust(correct ~ treatment_fruit + treatment_candy + gender, data = data, linear_hypothesis = 
             "(Intercept) = 0.167")
 ```
 
-
-The intercept is significantly different from $\frac{1}{6}$, therefore, children tend to lie either way. The estimations of the treatment effects are not significantly different from the intercept. Hence, the treatment does not influence behaviour too much and still lie. We of course, added robust standard errors because the outcome variable is binar, hence is heteroskedastic by nature. 
-
-We estimated a model only with the treatment effects, with all covariates, with the random covariates and with gender. Gender is significant while the other covariates are not.
-We tried adding different covariates. However, except for gender no covariate was significant and additionally led to higher standard errors. The same happens if one includes combinations of covariates into the model as shown in the second and third model.
+Generally, we tried different estimations with different combinations of covariates. However, except for gender no covariate was significant and additionally led to models with higher standard errors.
 
 (iii) The researcher is interested in testing if boys and girls behave differently. Write down and estimate a model that can test if boys lie more than girls and whether boys and girls respond differently to incentives (e.g. treatment).
 
 
-In the model including gender as a regressors, we can see that gender is significant at $10\%$ and negative. As the gender dummy equals 1 for girlst, we can conclude that there is weakly significant effect and the girls tend to lie less than boys. However, between the treatments there are no significant differences between gender.
+We already saw in previous results that gender has a weakly significant effect, providing us with evidence that boys tend to lie more than girls. To account for potentially different responses among the treatment groups, we also include interaction effects between gender and the respective treatments.
 
 ```{r}
 lh_robust(correct ~ treatment_fruit + treatment_candy + gender*treatment_fruit + gender*treatment_candy, data = data, linear_hypothesis = 
             "(Intercept) = 0.167")
 ```
-
-
+The results show that gender is still weakly significant and negative, therefore boys tend to lie more than girls. However, there are no significant interaction effects between gender and the type of treatment. Therefore, it does not depend on the incentive whether boys lie more than girls on average but on the gender.
 
 (iv) Estimate your preferred model specification (including pupil characteristics if this improves your model) and write down your main conclusions.
 
@@ -179,64 +185,71 @@ lh_robust(correct ~ treatment_fruit + treatment_candy + gender, data = data, lin
             "(Intercept) = 0.167")
 ```
 
-treatments and gender, no interaction effect
-children just always lie
-- they assume that they get something either way - question is did the research tell them that they will not get anything or did they leave the possibility open
-- children could have fun lying to children
-- maybe children did not like the researcher or they tend to lie to strangers (although research shows more the other way around - find paper)
-- competitive environment among children - did the children knew about the participation of other children?
+Following the discussion above, the preferred model includes gender as the only covariate due to its weak significance, but does not include interaction effects between gender and treatments which were found to be anything but significant. Estimation results of this relatively simple model are printed above and suggest that there are no significant treatment effects, while for all control/treatment groups there is clear evidence for lying (i.e. significant upward deviation in the share of pupils stating to have guessed correctly from 1/6). Moreover, the estimation yields very weak evidence for the proportion of pupils who lie to be lower for girls. However, since the experiment's power does not seem to accomodate the size of this effect only reasons for the former result are discussed in some detail.
 
+One can think of many reasons why the experiment yields evidence for lying across all control/groups but none for significant treatment effects which ultimately result in the potential treatment effect to be so small that it would not be accomodated by the experiment's power, even if one would assume that it exists. First, it seems unclear whether the researcher explicitly told children in the control group that they would not receive any reward for indicating "correct" or whether nothing was communicated at all potentially leaving pupils in the control group with the belief that they would still receive some sort of reward. Thus, by this effective substitution effect the observed difference in the outcome variable might have been vanished. Second, one could assume that children simply like lying to the research (e.g. due his poor randomization practice) even without any economic incentivization. Third, it is likely that the experiment induced some sort of competitive environment among pupils (especially if conducted at a school), such that even non-incentivized students lied so that the would belong the "winners" of the game even though it would not come with any benefit other than the intrinsic ones of belonging to this group. This effect may have been aggravated by the incentivization of other treated pupils so that some form of spill-over effect comprimised the experiment's validity.
 
 (v) Given the sample size and the estimates you have obtained above, what would be the minimum detectable effect size of this experiment?
 
-explain parameter
+To calculate the minimum detectable effect size (MDE) the customary power level $q$ of 80$\%$ and significance level $\alpha$ of 5$\%$ are applied. Moreover, the model is estimated once again using the function 'rlm' to robustly estimate the residual standard error $\sigma$. Based on these parameters, the MDE is calculated using the equation below where all t-statistics have degrees of freedom equal to $n-k$, where $n$ is the number of total observations and $k$ then number of regressors including the intercept. Moreover, $p$ equals the treatment density over both treatments so that the thus obtained MDE applies to both treatment effects studied.
+
+$$
+MDE=(t_{1-q}-t_{1-\alpha/2})\sqrt{\frac{1}{p(1-p)}}\sqrt{\frac{\sigma^2}{n}}
+$$
 
 ```{r}
-model4 <- lm(correct ~ treatment_fruit + treatment_candy + gender, data = data)
+model4_robust <- rlm(correct ~ treatment_fruit + treatment_candy + gender, data = data)
 
-k=4 
+k=length(model4_robust$coefficients)
 q=0.8
 alpha=0.05
 
 n <- length(data$treatment)
 m <- length(data$treatment[!data$treatment  == 0])
 
-t_alpha <- qt(p=alpha/2, df=n-k, lower.tail=FALSE)
-t_q <- qt(p=q, df=n-k, lower.tail=FALSE) 
+t_alpha <- qt(p=1-alpha/2, df=n-k, lower.tail=TRUE)
+t_q <- qt(p=1-q, df=n-k, lower.tail=TRUE) 
 p = m/n
 
-#Residual Standard error (Like Standard Deviation)
-k=length(model4$coefficients)-1 #Subtract one to ignore intercept
-SSE=sum(model4$residuals**2)
-t=length(model4$residuals)
-sigma = sqrt(SSE/(t-(1+k))) #Residual Standard Error
+sigma= summary(model4_robust)$sigma
 
 MDE = (t_alpha - t_q)*sqrt(1/(p*(1-p)))*sqrt(sigma^2/n)
 
 MDE
 ```
-
+Since this MDE would imply the fraction of pupils to lie to be more than 25 percentage points higher than in the control group, implying over 30% of treated pupils to lie, the original experiment cannot be characterized as particularly powerful and is thus unlikely to detect a significant effect, even if it may exist for some magnitude. In combination with the design issues discussed above, the power analysis gives a clear indication of why the experiment does not yield any significant results.
 
 (vi) Initially, the researcher expected that no pupil would lie if there is nothing at stake (control group) and that a quarter of the student lie for a candy bar. How large should the sample size of the experiment have been in that case?
 
-add explaination to MDE_target
+Since the researcher expects 25$\%$ of students in the candy bar treatment to lie while none do for the control group, so that $\frac{1}{6}$ of "controlled" students are expected to indicate correct, the implied MDE can be obtained as follows:
+
+$$
+25\%=\frac{(1/6+MDE_{target})-1/6}{1-1/6} \Rightarrow MDE_{target}=25\%\cdot(1-1/6)
+$$
+
+Based on $MDE_{target}$ the necessary sample size can be computed using the following equation, where t-statistics have $n-k$ degrees of freedom to avoid the necessity of a numerical solution method. Since the standardized t-distribution converges quite quickly in degrees of freedom and the necessary sample site is an integer value (rounded up), results should not be distorted in any way.
+
+$$
+n_{target}=\left(\frac{t_{1-q}-t_{1-\alpha/2}}{MDE}\right)^2 \sqrt\frac{\sigma^2}{n}
+$$
 
 ```{r}
 MDE_target = 0.25*(1 - (1/6))
-samplesize = ((t_alpha - t_q)/MDE_target)^2*((sigma^2)/(p*(1-p)))
-print(samplesize)
+n_target = ((t_alpha - t_q)/MDE_target)^2*((sigma^2)/(p*(1-p)))
+ceiling(n_target)
 ```
-
-Note: same df used as above to not have to iteratively solve it (only marginal difference)
+Since $MDE_{target}\approx 0.2083<MDE\approx 0.2557$, the necessary sample size of 306 is bigger than in the original experiment.
 
 (vii) Students assigned to the control group provide counterfactuals to both the fruit and the candy bar treatment. Show that by assigning more students to the control group than to each treatment group the same MDE can be achieved with fewer students in the experiment.
+
+In terms of testing power, it is optimal to allocate 50$\%$ of the students into the control group and treat the other 50$\%$  (with either treatment). If one would anticipate an equal effect size across treatments an equal split between them, i.e. 25$\%$-25$\%$, would be appropriate. If there heterogeneity in effect sizes between treatments is assumed more nuanced power analysis techniques may be necessary to determine the optimal alloaction of participants across treatments.
 
 ```{r}
 p2 <- 0.5
 new_size = ((t_alpha - t_q)/MDE)^2 * (sigma^2)/(p2*(1-p2))
-new_size
+ceiling(new_size)
 ```
-
+Since already close to 50% of the students are treated in the original experiment (53.69%), not much is to gain in the situation at hand. For ease of analysis, a plot of the relationship between the necessary sample size and the treatment density is provided below. For less uniform distributions across control and treatment group the variance of the estimated treatment effect increases thus increasing the necessary sample size to accomodate the same power and MDE.
 
 ```{r}
 p1 <- seq.int(from = 0, to = 1, by=0.01)
@@ -255,4 +268,3 @@ sampsize <- sampsize[c(-1,-101), ]
 plot(sampsize$p1,sampsize$n1, type="l")
 abline(h=length(data$treatment), col="red")
 ```
-describe graph
