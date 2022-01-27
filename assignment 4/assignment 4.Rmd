@@ -1,0 +1,137 @@
+---
+title: "Econometrics II - Assignment 4"
+author: "Uncensored sloths"
+date: "27 Jan 2022"
+output:
+  pdf_document:
+    includes:
+      in_header: "preamble.tex"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(RCT)
+library(MASS)
+library(stargazer)
+library(fixest)
+```
+
+# Question 1
+
+a)
+
+```{r}
+((0.7*0.4+0.3*0.6)-(0.4*0.2+0.6*0.5))/(0.7-0.4)
+```
+
+b)
+Given that you were in prison, the probability to get arrested again increases by $30\%$. Assuming that there are no defiers (which is necessary to make any inferences on the estimation), it is the causal effect of compliers (people with on average the same characteristic but prisoned by Jones and not prisoned by Smith). The estimator concerns $30\%$ of the population assuming again there are no defiers. Including defiers makes it impossible to estimate the fraction. We also assume that both judges get $50\%$ of the cases per person and that due to randomization the types are equally distributed among the  judges.
+
+Think about slide 18 what happens if we include defiers!
+
+c) People that are sentenced to prison by both judges. Hence, for Smith they make out $40\%$ of the sample as compliers and never takers will not be sentenced to prison Smith. For Jones, they are part of the $70\%$ together with the compliers as only the never takers are never sentenced to prison with Jones as a judge. They make out $40\%$ of the sample assuming monotonicity (so there are no people who would not be sentenced to prison by Jones, while being sentenced to prison by Smith).
+
+# Question 2
+
+a)
+
+```{r}
+MDE_target <- 0.1
+t_q = -0.524
+t_alpha <- 1.960
+p = 0.5
+sigma = (1-0.5)*0.5
+n_target = ((t_alpha - t_q)/MDE_target)^2*((sigma)/(p*(1-p)))
+n_target
+```
+
+b) 
+
+```{r}
+rt <- 0.8
+rc <- 0
+n_complience = ((t_alpha - t_q)/(MDE_target*(rt - rc)))^2*((sigma)/(p*(1-p)))
+n_complience
+```
+
+# Question 3
+
+```{r}
+# Load data
+data <- read.csv("assignment4.csv")
+```
+
+a) Compute for the children assigned to the control group the variance in flu incidence. If the
+researcher aims at reducing flu incidence by $0.05$, how many children should participate in
+the randomized experiment.
+
+```{r}
+MDE_target <- -0.05
+t_q <- -0.524
+t_alpha <- 1.960
+p <- 0.8
+flu_control <- mean(data[data$treatgroup == 0, 'flu'])
+sigma = (1-flu_control)*flu_control
+n_flu = ((t_alpha - t_q)/MDE_target)^2*((sigma)/(p*(1-p)))
+n_flu
+```
+
+
+b) Compute which fraction of the children in the treatment group actually received a flu shot.
+What is the implication for the power analysis of the experiment?
+
+```{r}
+rt <- mean(data[data$treatgroup == 1, 'flushot'])
+rt
+```
+```{r}
+rc <- mean(data[data$treatgroup == 0, 'flushot'])
+rc
+```
+
+```{r}
+sigma = (1-flu_control)*flu_control
+n_flu = ((t_alpha - t_q)/(MDE_target*(rt - rc)))^2*((sigma)/(p*(1-p)))
+n_flu
+```
+
+c) 
+
+```{r}
+data$treatedT <- ifelse(c(data$treatgroup == 1 & data$flushot==1), 1, 0)
+data$untreatedT <- ifelse(c(data$treatgroup == 1 & data$flushot==0), 1, 0)
+data$treatment <- ifelse(data$treatedT== 1, 1, ifelse(data$untreatedT== 1, 2, 0))
+```
+
+```{r}
+balance <- balance_table(data[, !names(data) %in% c("treatgroup", "flushot", "treatedT", "untreatedT")], "treatment")
+balance
+```
+
+d) Estimate this model using OLS. Next, include subsequently the individual characteristics.
+What do you learn from these regressions?
+
+```{r, results='asis'}
+model1_robust <- rlm(flu ~ flushot, data = subset(data, data$treatgroup == 1))
+model2_robust <- rlm(flu ~ flushot + genderchild + nationality + agemother + educmother + married + housincome, data = subset(data, data$treatgroup == 1))
+stargazer(model1_robust, model2_robust)
+```
+
+e) Use 2SLS to estimate $\beta_1$ and check the robustness with respect to adding individual characteristic
+
+```{r}
+model3 <- feols(flu ~ 1 | flushot ~ treatgroup, data)
+summary(model3)
+```
+```{r}
+model4 <- feols(flu ~ genderchild + nationality + agemother + educmother + married + housincome | flushot ~ treatgroup, data)
+summary(model4)
+```
+f) Estimate the first-stage regression using OLS. Are you afraid of a weak instruments problem?
+
+```{r, results='asis'}
+first_stage <- rlm(flushot ~ treatgroup, data = data)
+stargazer(first_stage)
+```
+Also note that first stafe F test in the previous estimation is above 10!
+
