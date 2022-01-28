@@ -14,26 +14,35 @@ library(RCT)
 library(MASS)
 library(stargazer)
 library(fixest)
+library(car)
 ```
 
 # Question 1
 
-a)
+a) Use the Wald estimator to compute the causal effect of a prison sentence on the probability
+of being arrested later.
+
 
 ```{r}
 ((0.7*0.4+0.3*0.6)-(0.4*0.2+0.6*0.5))/(0.7-0.4)
 ```
 
-b)
+b) What is the interpretation of the estimated effect? And for which fraction of the population
+does this causal effect hold?
+
 Given that you were in prison, the probability to get arrested again increases by $30\%$. Assuming that there are no defiers (which is necessary to make any inferences on the estimation), it is the causal effect of compliers (people with on average the same characteristic but prisoned by Jones and not prisoned by Smith). The estimator concerns $30\%$ of the population assuming again there are no defiers. Including defiers makes it impossible to estimate the fraction. We also assume that both judges get $50\%$ of the cases per person and that due to randomization the types are equally distributed among the  judges.
 
-Think about slide 18 what happens if we include defiers!
+There are possibilities that there are defiers though. IF this is the case, it becomes very difficult to interpret the Wald estimator as it becomes biased (Imbens). You can make the following assumptions [citate Imbens and De Che...] to argue that we still cn use the Wald estimator. However, if these assumptions do not hold, the interpretation is rather inconclusive.
 
-c) People that are sentenced to prison by both judges. Hence, for Smith they make out $40\%$ of the sample as compliers and never takers will not be sentenced to prison Smith. For Jones, they are part of the $70\%$ together with the compliers as only the never takers are never sentenced to prison with Jones as a judge. They make out $40\%$ of the sample assuming monotonicity (so there are no people who would not be sentenced to prison by Jones, while being sentenced to prison by Smith).
+c) Explain what an always taker is in this setting and which fraction of the population are
+always takers?
+
+People that are sentenced to prison by both judges. Hence, for Smith they make out $40\%$ of the sample as compliers and never takers will not be sentenced to prison Smith. For Jones, they are part of the $70\%$ together with the compliers as only the never takers are never sentenced to prison with Jones as a judge. They make out $40\%$ of the sample assuming monotonicity (so there are no people who would not be sentenced to prison by Jones, while being sentenced to prison by Smith).
 
 # Question 2
 
-a)
+a) Perform a power calculation for the number of students that the teacher should include in
+the field experiment.
 
 ```{r}
 MDE_target <- 0.1
@@ -45,7 +54,9 @@ n_target = ((t_alpha - t_q)/MDE_target)^2*((sigma)/(p*(1-p)))
 n_target
 ```
 
-b) 
+b)  The teacher assumes that 20% of the students randomized in the treatment group will
+actually have breakfast. How does this change the number of students required to participate
+in the field experiment?
 
 ```{r}
 rt <- 0.8
@@ -53,6 +64,8 @@ rc <- 0
 n_complience = ((t_alpha - t_q)/(MDE_target*(rt - rc)))^2*((sigma)/(p*(1-p)))
 n_complience
 ```
+This increases the number of students that is required to participate as not everyone complies with the treatment.
+
 
 # Question 3
 
@@ -84,6 +97,9 @@ What is the implication for the power analysis of the experiment?
 rt <- mean(data[data$treatgroup == 1, 'flushot'])
 rt
 ```
+
+Approximately, $66.8\%$ of children in the reatment actually received a flu shot. 
+
 ```{r}
 rc <- mean(data[data$treatgroup == 0, 'flushot'])
 rc
@@ -94,8 +110,10 @@ sigma = (1-flu_control)*flu_control
 n_flu = ((t_alpha - t_q)/(MDE_target*(rt - rc)))^2*((sigma)/(p*(1-p)))
 n_flu
 ```
+If we do not increase the sample, this would decrease the power of the sample considerably. That is why to keep the same power, we would need a sample of 8140 people. 
 
-c) 
+c) Make a table with summary statistics for (1) the control group, (2) the treated treatment
+group, and (3) the untreated treatment group. What do you conclude?
 
 ```{r}
 data$treatedT <- ifelse(c(data$treatgroup == 1 & data$flushot==1), 1, 0)
@@ -107,6 +125,7 @@ data$treatment <- ifelse(data$treatedT== 1, 1, ifelse(data$untreatedT== 1, 2, 0)
 balance <- balance_table(data[, !names(data) %in% c("treatgroup", "flushot", "treatedT", "untreatedT")], "treatment")
 balance
 ```
+Except for the gender of the children which is equally distributed among the control and treatment groups, we have significant differences among the different groups in terms of the age of the mother, the education of the mother, the household income, the proportion of marriages and the proportion of children with a migration background. add specifics 
 
 d) Estimate this model using OLS. Next, include subsequently the individual characteristics.
 What do you learn from these regressions?
@@ -114,10 +133,19 @@ What do you learn from these regressions?
 ```{r, results='asis'}
 model1_robust <- rlm(flu ~ flushot, data = subset(data, data$treatgroup == 1))
 model2_robust <- rlm(flu ~ flushot + genderchild + nationality + agemother + educmother + married + housincome, data = subset(data, data$treatgroup == 1))
+
 stargazer(model1_robust, model2_robust)
 ```
 
-e) Use 2SLS to estimate $\beta_1$ and check the robustness with respect to adding individual characteristic
+the flushot has a significant effect in both cases although it is stronger in the first model.  Except for the household income and the marriages, every additional covariate is significant. Although the gender is only weakly significant. Write a little bit about the effects. 
+
+They are also jointly significant.
+```{r}
+linearHypothesis(model2_robust, c("genderchild=0", "nationality=0", "agemother=0", "educmother=0", "married=0", "housincome=0"))
+```
+
+
+e) Use 2SLS to estimate $\beta_1$ and check the robustness with respect to adding individual characteristics.
 
 ```{r}
 model3 <- feols(flu ~ 1 | flushot ~ treatgroup, data)
@@ -127,11 +155,25 @@ summary(model3)
 model4 <- feols(flu ~ genderchild + nationality + agemother + educmother + married + housincome | flushot ~ treatgroup, data)
 summary(model4)
 ```
+We can see that the estimation is robust as for both estimations we get an estimated effect of approximately $-0.2$ and in both cases it is significant at $0.1\%$.
+
 f) Estimate the first-stage regression using OLS. Are you afraid of a weak instruments problem?
 
 ```{r, results='asis'}
-first_stage <- rlm(flushot ~ treatgroup, data = data)
+first_stage <- rlm(flushot ~ treatgroup + genderchild + nationality + agemother + educmother + married + housincome, data = data)
 stargazer(first_stage)
 ```
-Also note that first stafe F test in the previous estimation is above 10!
+We estimate the first stage including the instrument and all exogeneous variables as regressors. Except for gender every estimtor is significant. Talk about the interpretation. 
 
+We do not see an issue with weak instruments here, as the effect of being in the treatment group is significant at $0.01\%$ and including the estimation from the previous subquestion, we can observe that for both estimation we have a first-stage F statistics above 10. Hence, we have have evidence that the assignment to the treatment group is not a weak instrument. 
+
+g) Explain why in this case the local average treatment effect is the same as the average
+treatment effect on the treated.
+
+D(1)=1 includes always takers and compliers but we can exclude always takers based on the data 
+D(0)=1 includes always takers and defiers but als can exlude defiers based on the data
+
+LATE is constructed the way that it only considers compliers, so never takers are not considered that is why we have D(1)-D(0)=D(1)=1. ATET only considers treated people and assumes full compliance so D(1)=1. That's why they are the same. Vital aspects are that defiers and always takers can be excluded otherwise this argument is not valid. If there are always takers the relationship does not hold as ATET is not able to detect them.
+$$
+LATE = E(Y_1^*)
+$$
