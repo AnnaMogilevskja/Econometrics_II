@@ -79,12 +79,20 @@ researcher aims at reducing flu incidence by $0.05$, how many children should pa
 the randomized experiment.
 
 ```{r}
+q <- mean(data[data$treatgroup == 0, 'flu'])
+sigma = (1-q)*q
+sigma
+```
+To variance in flu incidence of the children assigned to the control group is approximately $0.2354$.
+
+As the researcher aims to reduce the flue incidence by $0.05$, we set our MDE value to $-0.05$. $80\%$ of the children are supposed to get the flu shot which is why we set p to $0.8$. The variance of the Bernoulli variable corresponds to the variance in flu incidence of the children assigned to the control group.
+Setting the power to $70\%$ and the significance level to $5\%$, we get a required sample size of 3632 children. 
+
+```{r}
 MDE_target <- -0.05
 t_q <- -0.524
 t_alpha <- 1.960
 p <- 0.8
-flu_control <- mean(data[data$treatgroup == 0, 'flu'])
-sigma = (1-flu_control)*flu_control
 n_flu = ((t_alpha - t_q)/MDE_target)^2*((sigma)/(p*(1-p)))
 n_flu
 ```
@@ -98,7 +106,7 @@ rt <- mean(data[data$treatgroup == 1, 'flushot'])
 rt
 ```
 
-Approximately, $66.8\%$ of children in the reatment actually received a flu shot. 
+Approximately, $66.8\%$ of children in the treatment actually received a flu shot. 
 
 ```{r}
 rc <- mean(data[data$treatgroup == 0, 'flushot'])
@@ -106,11 +114,11 @@ rc
 ```
 
 ```{r}
-sigma = (1-flu_control)*flu_control
+sigma = (1-q)*q
 n_flu = ((t_alpha - t_q)/(MDE_target*(rt - rc)))^2*((sigma)/(p*(1-p)))
 n_flu
 ```
-If we do not increase the sample, this would decrease the power of the sample considerably. That is why to keep the same power, we would need a sample of 8140 people. 
+Not every child that was supposed to get a flu shot, got a flu shot which is why we set the  rate in the treatment group to $r_t \approx 0.668$. There are no children who were not supposed to get treatment but got a flu shot which is why the the treatment intensity in the control group equals zero ($r_c = 0$). Including these aspects into our calculation of the sample size, we find that the necessary sample size increases to 8140 children. If we do not increase the sample, this would decrease the power of the design considerably. 
 
 c) Make a table with summary statistics for (1) the control group, (2) the treated treatment
 group, and (3) the untreated treatment group. What do you conclude?
@@ -125,23 +133,34 @@ data$treatment <- ifelse(data$treatedT== 1, 1, ifelse(data$untreatedT== 1, 2, 0)
 balance <- balance_table(data[, !names(data) %in% c("treatgroup", "flushot", "treatedT", "untreatedT")], "treatment")
 balance
 ```
-Except for the gender of the children which is equally distributed among the control and treatment groups, we have significant differences among the different groups in terms of the age of the mother, the education of the mother, the household income, the proportion of marriages and the proportion of children with a migration background. add specifics 
+Except for the gender of the children, which is equally distributed among the control, the treated treatment and the untreated treatment groups, we have significant differences in terms of the age of the mother, the education of the mother, the household income, the proportion of marriages and the proportion of children with a migration background. The mothers in the untreated treatment group are younger than the mothers in the control group and the treated treatment group. Moreover, they have less years of education, the households have a lower income and a higher share of the mothers is not married. Last but not least, a higher share of the children is native in the untreated treatment group. 
+
+In the treated treatment group, on the other side, the mothers are older than in the control group. They have more years of education, a higher household income and higher share of the mothers is married. Further, a lower share of the children is native. The treated treatment group has a considerably lower share of children who got the flu while the untreated treatment group has a higher share than the control group. 
+
+Considering these evident differences between the control and the untreated treatment group, we can conclude that getting the flu shot is not the only aspect that impacts the probability of getting the flu as otherwise the untreated treatment group would not have significantly more flu infections on average than the control group. One reason why this group has more flu infections than the control group might be that the children have worse access to healthy diet as the mothers earn less on average and are more often single mothers (assuming that they raise their children alone as a result of being not married). This would have a negative effect on their immune system, making the children more prone to get the flu.
+
+Further, we have to consider that whether a child receives the assigned treatment or not does not only relate to the treatment assignment but also to the age of the mother, the education of the mother, the household income, the marital status of the mother and the nationality of the child as there are considerable differences between the treated and untreated treatment group. However, to be able to make more inferences on that, we would have to do further estimations first.
 
 d) Estimate this model using OLS. Next, include subsequently the individual characteristics.
 What do you learn from these regressions?
 
 ```{r, results='asis'}
 model1_robust <- rlm(flu ~ flushot, data = subset(data, data$treatgroup == 1))
-model2_robust <- rlm(flu ~ flushot + genderchild + nationality + agemother + educmother + married + housincome, data = subset(data, data$treatgroup == 1))
+model2_robust <- rlm(flu ~ flushot + genderchild + nationality + agemother + educmother + married 
+                     + housincome, data = subset(data, data$treatgroup == 1))
 
 stargazer(model1_robust, model2_robust)
 ```
 
-the flushot has a significant effect in both cases although it is stronger in the first model.  Except for the household income and the marriages, every additional covariate is significant. Although the gender is only weakly significant. Write a little bit about the effects. 
+We estimate two OLS models with robust standard errors. The first model include whether a child received the flushot as its only regressor. The other model also includes individuals characteristics such as the gender and the migration background of the child as well as the age, the years of education, the marital status of the mother and the household income. As the researcher wants to focus only on those children randomized in the treatment group, we only use the data of the children who were assigned treatment. 
 
-They are also jointly significant.
+In both model the flushot is estimated to decrease the probability of getting the flu significantly. However, the estimated impact is considerably lower when we include individual characteristics. Hence, our estimation is not robust. Further, the age of the mother and the education of the mother have a significant, negative effect while the child being native has a significant positive effect. Being a girl also has a significant positive effect but only at $10\%$. The F test shows us that the estimators are jointly significant. 
+
+As the estimations for the flushot differ considerably between the two models, we have to consider that the model specification may be wrong or that underlying assumptions do not hold (f.e. heteroskedasticity or endogeneity of the regressors).
+
 ```{r}
-linearHypothesis(model2_robust, c("genderchild=0", "nationality=0", "agemother=0", "educmother=0", "married=0", "housincome=0"))
+linearHypothesis(model2_robust, c("genderchild=0", "nationality=0", "agemother=0", "educmother=0", 
+                                  "married=0", "housincome=0"))
 ```
 
 
@@ -152,28 +171,43 @@ model3 <- feols(flu ~ 1 | flushot ~ treatgroup, data)
 summary(model3)
 ```
 ```{r}
-model4 <- feols(flu ~ genderchild + nationality + agemother + educmother + married + housincome | flushot ~ treatgroup, data)
+model4 <- feols(flu ~ genderchild + nationality + agemother + educmother + married 
+                + housincome | flushot ~ treatgroup, data)
 summary(model4)
 ```
-We can see that the estimation is robust as for both estimations we get an estimated effect of approximately $-0.2$ and in both cases it is significant at $0.1\%$.
+We estimate two models using the assignment to treatment as an instrumental variable for the regressor flushot. As in the previous subquestion, the first model includes flushot as its only regressors in the second stage regression and the second model includes the flushot and individual characteristics. In both models, we get an estimation of approximately $-0.2$ for the flushot. Further, in both models the estimation is significant at $0.1\%$. Hence, the estimation for the flushot is robust with respect to adding individual characteristics.
 
 f) Estimate the first-stage regression using OLS. Are you afraid of a weak instruments problem?
 
 ```{r, results='asis'}
-first_stage <- rlm(flushot ~ treatgroup + genderchild + nationality + agemother + educmother + married + housincome, data = data)
+first_stage <- rlm(flushot ~ treatgroup + genderchild + nationality + agemother + educmother + married 
+                   + housincome, data = data)
 stargazer(first_stage)
 ```
-We estimate the first stage including the instrument and all exogeneous variables as regressors. Except for gender every estimtor is significant. Talk about the interpretation. 
+We estimate the first stage including the instrumental variable and all exogenous variables as regressors. The assignment to treatment increases the probability of getting a flushot. The same goes for the age, the marital status and the years of education of the mother, although their impact is considerably lower than in the case of the assignment to treatment. The household income also has a small, positive and significant effect, while the child being a native has a negative effect. Hence, we can conclude that children, whose mothers are younger, have less years of education and are single, were less likely to get the flushot. On the other hand, children that have a migration background were more likely to get a flushot.  
 
-We do not see an issue with weak instruments here, as the effect of being in the treatment group is significant at $0.01\%$ and including the estimation from the previous subquestion, we can observe that for both estimation we have a first-stage F statistics above 10. Hence, we have have evidence that the assignment to the treatment group is not a weak instrument. 
+We do not see an issue with weak instruments here, as the effect of being in the treatment group is significant at $0.01\%$. Including the estimation from the previous subquestion, we can observe that for both estimations we have a first-stage F statistics above 10. Hence, we have have evidence that the assignment to the treatment group is not a weak instrument. 
 
 g) Explain why in this case the local average treatment effect is the same as the average
 treatment effect on the treated.
 
-D(1)=1 includes always takers and compliers but we can exclude always takers based on the data 
-D(0)=1 includes always takers and defiers but als can exlude defiers based on the data
+LATE is the local treatment effect of the compliers, so when $D(1)-D(0)=1$. ATET is the effect on the treated, so when $D=1$. D equals one in four cases. First, the individual was not assigned treatment but still got the treatment, so $D(0) = 1$. In this case the individual is either an always taker or a defier. If the individual was assigned treatment and got the treatment, so when $D(1)=1$, then the individual is either an always taker or a complier. 
 
-LATE is constructed the way that it only considers compliers, so never takers are not considered that is why we have D(1)-D(0)=D(1)=1. ATET only considers treated people and assumes full compliance so D(1)=1. That's why they are the same. Vital aspects are that defiers and always takers can be excluded otherwise this argument is not valid. If there are always takers the relationship does not hold as ATET is not able to detect them.
 $$
-LATE = E(Y_1^*)
+D_i = 1 
+\begin{cases}
+  D(0) = 1 & \text{if i is Always Taker or Defier}\\
+  D(1) = 1 & \text{if i is Always Taker or Complier}
+\end{cases}
+$$
+
+Based on the data, we can exclude always takers and defiers completely because no one of the control group received a flushot despite not being assigned the treatment. Therefore, we have only compliers and never takers in our sample. 
+
+As ATET only considers individuals that got treatment but is not able to differentiate between defiers, compliers and always takers, ATET usually does not equal LATE. However, in our case, we were able to exclude the possibility of always takers and defiers in our sample. Hence, ATET only considers compliers here and therefore is the same as LATE.
+
+Note that the existence of never takers in our sample is not an issue because neither LATE nor ATET considers never takers. 
+
+Mathematically, this means that $D(1)-D(0) = D(1)$ as $D(0)=0$. Hence, we can write:
+$$
+LATE = E(Y_1^* - Y_0^*|D(1)-D(0)=1) = E(Y_1^* - Y_0^*|D(1)=1) = E(Y_1^* - Y_0^*|D=1) = ATET
 $$

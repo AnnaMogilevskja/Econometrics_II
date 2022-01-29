@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (MiKTeX 21.6) (preloaded format=pdflatex 2021.9.26)  28 JAN 2022 18:08
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (MiKTeX 21.6) (preloaded format=pdflatex 2021.9.26)  29 JAN 2022 13:49
 entering extended mode
 **./assignment-4.tex
 (assignment-4.tex
@@ -553,41 +553,44 @@ LaTeX Font Info:    External font `lmex10' loaded for size
 
 {C:/Users/Anna/AppData/Local/MiKTeX/pdftex/config/pdftex.map}]
 LaTeX Font Info:    Trying to load font information for TS1+lmtt on input line 
-257.
+253.
 (C:\Users\Anna\AppData\Local\Programs\MiKTeX\tex/latex/lm\ts1lmtt.fd
 File: ts1lmtt.fd 2009/10/30 v1.6 Font defs for Latin Modern
-) [2] [3] [4] [5] [6] [7] (assignment-4.aux)
+) [2] [3] [4] [5] [6] [7] [8] (assignment-4.aux)
 
 LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 13288 strings out of 478864
- 201449 string characters out of 2849134
- 563231 words of memory out of 3000000
- 30868 multiletter control sequences out of 15000+600000
- 451631 words of font info for 110 fonts, out of 8000000 for 9000
+ 13327 strings out of 478864
+ 201863 string characters out of 2849134
+ 559231 words of memory out of 3000000
+ 30872 multiletter control sequences out of 15000+600000
+ 458908 words of font info for 128 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 74i,10n,80p,1011b,519s stack positions out of 5000i,500n,10000p,200000b,80000s
-{C:/Users/Anna/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}{C:
-/Users/Anna/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.enc}{C:/
-Users/Anna/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ec.enc}{C:/Users
-/Anna/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ts1.enc}{C:/Users/Ann
-a/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.enc}<C:/Users/Anna
-/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx12.pfb><C:/Users/Anna/
-AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi10.pfb><C:/Users/Anna/A
-ppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr10.pfb><C:/Users/Anna/App
-Data/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr12.pfb><C:/Users/Anna/AppDa
-ta/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr17.pfb><C:/Users/Anna/AppData
-/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr7.pfb><C:/Users/Anna/AppData/Lo
-cal/Programs/MiKTeX/fonts/type1/public/lm/lmri10.pfb><C:/Users/Anna/AppData/Loc
-al/Programs/MiKTeX/fonts/type1/public/lm/lmsy10.pfb><C:/Users/Anna/AppData/Loca
-l/Programs/MiKTeX/fonts/type1/public/lm/lmsy7.pfb><C:/Users/Anna/AppData/Local/
-Programs/MiKTeX/fonts/type1/public/lm/lmtt10.pfb><C:/Users/Anna/AppData/Local/P
-rograms/MiKTeX/fonts/type1/public/lm/lmtti10.pfb>
-Output written on assignment-4.pdf (7 pages, 230067 bytes).
+ 74i,10n,80p,1011b,485s stack positions out of 5000i,500n,10000p,200000b,80000s
+{C:/Users/Anna/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathex.enc
+}{C:/Users/Anna/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}{C:/
+Users/Anna/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.enc}{C:/U
+sers/Anna/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ec.enc}{C:/Users/
+Anna/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.enc}{C:/Users/A
+nna/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ts1.enc}<C:/Users/Anna/
+AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx12.pfb><C:/Users/Anna/A
+ppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmex10.pfb><C:/Users/Anna/Ap
+pData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi10.pfb><C:/Users/Anna/App
+Data/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi7.pfb><C:/Users/Anna/AppDa
+ta/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr10.pfb><C:/Users/Anna/AppData
+/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr12.pfb><C:/Users/Anna/AppData/L
+ocal/Programs/MiKTeX/fonts/type1/public/lm/lmr17.pfb><C:/Users/Anna/AppData/Loc
+al/Programs/MiKTeX/fonts/type1/public/lm/lmr7.pfb><C:/Users/Anna/AppData/Local/
+Programs/MiKTeX/fonts/type1/public/lm/lmri10.pfb><C:/Users/Anna/AppData/Local/P
+rograms/MiKTeX/fonts/type1/public/lm/lmsy10.pfb><C:/Users/Anna/AppData/Local/Pr
+ograms/MiKTeX/fonts/type1/public/lm/lmsy7.pfb><C:/Users/Anna/AppData/Local/Prog
+rams/MiKTeX/fonts/type1/public/lm/lmtt10.pfb><C:/Users/Anna/AppData/Local/Progr
+ams/MiKTeX/fonts/type1/public/lm/lmtti10.pfb>
+Output written on assignment-4.pdf (8 pages, 246568 bytes).
 PDF statistics:
- 138 PDF objects out of 1000 (max. 8388607)
- 28 named destinations out of 1000 (max. 500000)
- 24601 words of extra memory for PDF output out of 24883 (max. 10000000)
+ 153 PDF objects out of 1000 (max. 8388607)
+ 29 named destinations out of 1000 (max. 500000)
+ 28697 words of extra memory for PDF output out of 29859 (max. 10000000)
 
