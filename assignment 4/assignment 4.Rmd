@@ -1,7 +1,7 @@
 ---
 title: "Econometrics II - Assignment 4"
 author: "Uncensored sloths"
-date: "27 Jan 2022"
+date: "30 Jan 2022"
 output:
   pdf_document:
     includes:
@@ -104,7 +104,7 @@ q <- mean(data[data$treatgroup == 0, 'flu'])
 sigma = (1-q)*q
 sigma
 ```
-To variance in flu incidence of the children assigned to the control group is approximately $0.2354$.
+The variance in flu incidence of the children assigned to the control group is approximately $0.2354$.
 
 As the researcher aims to reduce the flue incidence by $0.05$, we set our MDE value to $-0.05$. $80\%$ of the children are supposed to get the flu shot which is why we set p to $0.8$. The variance of the Bernoulli variable corresponds to the variance in flu incidence of the children assigned to the control group.
 Setting the power to $70\%$ and the significance level to $5\%$, we get a required sample size of 3632 children. 
