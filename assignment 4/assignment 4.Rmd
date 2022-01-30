@@ -22,6 +22,11 @@ library(car)
 a) Use the Wald estimator to compute the causal effect of a prison sentence on the probability
 of being arrested later.
 
+Since treatment participation $D_i=1$ (i.e. a prison sentence) is likely related to unobserved characteristics,instrumentation using the random assignment to either judge $Z_i$ is necessary. Since the probability of being sentenced to prison is higher for judge Jones, assignment to Jones when $Z_i=1$ is treated as the assignment to the treatment hereinafter. Hence, the Wald estimator reads as:
+
+$$
+\hat{\delta}_{Wald}=\frac{\mathrm{E}[Y|Z=1]-\mathrm{E}[Y|Z=0]}{\mathrm{E}[D|Z=1]-\mathrm{E}[D|Z=0]}=\frac{(70\%\cdot40\%+30\%\cdot60\%)-(40\%\cdot20\%+60\%\cdot50\%)}{70\%-40\%}=26.\bar{6}\%
+$$
 
 ```{r}
 ((0.7*0.4+0.3*0.6)-(0.4*0.2+0.6*0.5))/(0.7-0.4)
@@ -30,19 +35,27 @@ of being arrested later.
 b) What is the interpretation of the estimated effect? And for which fraction of the population
 does this causal effect hold?
 
-Given that you were in prison, the probability to get arrested again increases by $30\%$. Assuming that there are no defiers (which is necessary to make any inferences on the estimation), it is the causal effect of compliers (people with on average the same characteristic but prisoned by Jones and not prisoned by Smith). The estimator concerns $30\%$ of the population assuming again there are no defiers. Including defiers makes it impossible to estimate the fraction. We also assume that both judges get $50\%$ of the cases per person and that due to randomization the types are equally distributed among the  judges.
+Hence, the Wald estimator states that a prison sentence increases the probability of being arrested later by $26.\bar{6}\%$. However, assuming monotonicity this causal effect only holds for compliers, i.e. people which would be sentenced to prison by Jones, but not by Smith. By the monoticity assumption, i.e. ruling out the existence of defiers, which would not be sentenced to prison by Jones, but would be by Smith, the fraction of compliers in the population can be estimated by the (thus identifiable) fraction of compliers in the sample.
 
-There are possibilities that there are defiers though. IF this is the case, it becomes very difficult to interpret the Wald estimator as it becomes biased (Imbens). You can make the following assumptions [citate Imbens and De Che...] to argue that we still cn use the Wald estimator. However, if these assumptions do not hold, the interpretation is rather inconclusive.
+Assuming away defiers, we know that all $40\%$ of the people sentenced to the treatment by Smith, i.e. for which $D(0)=1$ are always takers. Moreover, we know that under the non-existence of defiers, all $30\%$ of the people not sentenced to the treatment by Jones, i.e. for which $D(1)=0$, are never takers. Hence, assuming that cases are truly randomly assigned to the judges, this implies that there must be $100\%-40\%-30\%=30\%$ compliers in the sample and thus that the causal effect identified by the Wald estimator holds for (approximately) $30\%$ of the population.
+
+There is serious doubt, however, whether the assumption of monotonicity holds in the application at hand. After all, it seems anything but far fetched to assume that there are some individuals which are sentenced to prison by Smith, but not by Jones (conditional on some characteristics), even though Jones is on average more likely to convict people to prison. If this is the case, it becomes very difficult to interpret the Wald estimator as it becomes biased by the presence of defiers (Angrist et al, 1996). One could, however, still consider alternative assumptions to validate the interpretation of the Wald estimator outlined above. First, one could argue along the lines of Angrist et al. (1996) that the treatment effect for defiers and compliers is identical. Second, one could impose the complier-defier assumption brought forward by De Chaisemartin (2017) and assume that there exists some group of compliers which has the same size and average treatment effect as the defiers such that the bias brought along by defiers vanishes. However, if these assumptions do not reasonably hold, the interpretation of the Wald estimator is rather inconclusive.
 
 c) Explain what an always taker is in this setting and which fraction of the population are
 always takers?
 
-People that are sentenced to prison by both judges. Hence, for Smith they make out $40\%$ of the sample as compliers and never takers will not be sentenced to prison Smith. For Jones, they are part of the $70\%$ together with the compliers as only the never takers are never sentenced to prison with Jones as a judge. They make out $40\%$ of the sample assuming monotonicity (so there are no people who would not be sentenced to prison by Jones, while being sentenced to prison by Smith).
+People that are sentenced to prison by both judges should be considered as always takers in this setting. Hence, for Smith they make up $40\%$ of the sample once we assume away defiers since compliers and never takers are never sentenced to prison by Smith. For Jones, they are part of the $70\%$ together with the compliers as only the never takers are never sentenced to prison with Jones as a judge under the monotonicity assumption. Consequently, always takers constitute $40\%$ of the sample/population assuming monotonicity.
 
 # Question 2
 
 a) Perform a power calculation for the number of students that the teacher should include in
 the field experiment.
+
+Performing a power calculation, the number of students that need to be included in the field experiment can be calculated using the customary formula, where (i) $MDE=0.1$ since the teacher thinks the passing rate is 10 percentage points lower for the treatment group, (ii) treatment intensity $p=0.5$ by assumption since this minimizes the necessary sample size c.p., (iii) $\sigma=0.5(1-0.5)=0.25$ since the teacher assumes that 50% of students in the control group will pass the exam, and $t_{1-\alpha/2}=t_{0.975}=1.960$ and $t_{1-q}=t_{0.3}=-0.524$ as specified by the teacher.
+
+$$
+n=\left(\frac{t_{1-\alpha/2}-t_{1-q}}{MDE}\right)^2\frac{\sigma}{p(1-p)}
+$$
 
 ```{r}
 MDE_target <- 0.1
@@ -51,21 +64,29 @@ t_alpha <- 1.960
 p = 0.5
 sigma = (1-0.5)*0.5
 n_target = ((t_alpha - t_q)/MDE_target)^2*((sigma)/(p*(1-p)))
-n_target
+ceiling(n_target)
 ```
+Hence, the teacher should include 618 students in the field experiment. The question whether the teacher should include any students in the experiment, i.e. whether to run it all, in light of ethical considerations is left to the interested reader.
 
 b)  The teacher assumes that 20% of the students randomized in the treatment group will
 actually have breakfast. How does this change the number of students required to participate
 in the field experiment?
 
+Since the teacher does not expect full compliance, the number of necessary students should be computed as follows, where the compliance rate in the treatment group $r_t=0.8$ since the teacher assumes that 20% of the students randomized in the treatment group will
+actually have breakfast and the treatment intensity in the control group $r_c=0$ since the teacher assumes that all people in the control group will have breakfast. 
+
+$$
+n=\left(\frac{t_{1-\alpha/2}-t_{1-q}}{MDE(r_t-r_c)}\right)^2\frac{\sigma}{p(1-p)}
+$$
+
 ```{r}
 rt <- 0.8
 rc <- 0
 n_complience = ((t_alpha - t_q)/(MDE_target*(rt - rc)))^2*((sigma)/(p*(1-p)))
-n_complience
+ceiling(n_complience)
 ```
-This increases the number of students that is required to participate as not everyone complies with the treatment.
 
+As one would expect intuitively, non-compliance in the treatment group weakens the power of the experiment and thus increases the number of students that is required to participate to 965 (more than 50%) as not everyone complies with the treatment.
 
 # Question 3
 
@@ -94,7 +115,7 @@ t_q <- -0.524
 t_alpha <- 1.960
 p <- 0.8
 n_flu = ((t_alpha - t_q)/MDE_target)^2*((sigma)/(p*(1-p)))
-n_flu
+ceiling(n_flu)
 ```
 
 
@@ -116,9 +137,9 @@ rc
 ```{r}
 sigma = (1-q)*q
 n_flu = ((t_alpha - t_q)/(MDE_target*(rt - rc)))^2*((sigma)/(p*(1-p)))
-n_flu
+ceiling(n_flu)
 ```
-Not every child that was supposed to get a flu shot, got a flu shot which is why we set the  rate in the treatment group to $r_t \approx 0.668$. There are no children who were not supposed to get treatment but got a flu shot which is why the the treatment intensity in the control group equals zero ($r_c = 0$). Including these aspects into our calculation of the sample size, we find that the necessary sample size increases to 8140 children. If we do not increase the sample, this would decrease the power of the design considerably. 
+Not every child that was supposed to get a flu shot, got a flu shot which is why we set the  rate in the treatment group to $r_t \approx 0.668$. There are no children who were not supposed to get treatment but got a flu shot which is why the the treatment intensity in the control group equals zero ($r_c = 0$). Including these aspects into our calculation of the sample size, we find that the necessary sample size increases to 8140 children. Hence, if we do not increase the sample, this would decrease the power of the design considerably. 
 
 c) Make a table with summary statistics for (1) the control group, (2) the treated treatment
 group, and (3) the untreated treatment group. What do you conclude?
@@ -156,13 +177,12 @@ We estimate two OLS models with robust standard errors. The first model include 
 
 In both model the flushot is estimated to decrease the probability of getting the flu significantly. However, the estimated impact is considerably lower when we include individual characteristics. Hence, our estimation is not robust. Further, the age of the mother and the education of the mother have a significant, negative effect while the child being native has a significant positive effect. Being a girl also has a significant positive effect but only at $10\%$. The F test shows us that the estimators are jointly significant. 
 
-As the estimations for the flushot differ considerably between the two models, we have to consider that the model specification may be wrong or that underlying assumptions do not hold (f.e. heteroskedasticity or endogeneity of the regressors).
+As the estimations for the flushot differ considerably between the two models, we have to consider that the model specification may be wrong or that underlying assumptions do not hold (e.g. heteroskedasticity or endogeneity of the regressors).
 
 ```{r}
 linearHypothesis(model2_robust, c("genderchild=0", "nationality=0", "agemother=0", "educmother=0", 
                                   "married=0", "housincome=0"))
 ```
-
 
 e) Use 2SLS to estimate $\beta_1$ and check the robustness with respect to adding individual characteristics.
 
@@ -211,3 +231,7 @@ Mathematically, this means that $D(1)-D(0) = D(1)$ as $D(0)=0$. Hence, we can wr
 $$
 LATE = E(Y_1^* - Y_0^*|D(1)-D(0)=1) = E(Y_1^* - Y_0^*|D(1)=1) = E(Y_1^* - Y_0^*|D=1) = ATET
 $$
+
+# References
+Angrist, J. D., Imbens, G. W., & Rubin, D. B. (1996). Identification of causal effects using instrumental variables. Journal of the American statistical Association, 91(434), 444-455.
+De Chaisemartin, C. (2017). Tolerating defiance? Local average treatment effects without monotonicity. Quantitative Economics, 8(2), 367-396.
