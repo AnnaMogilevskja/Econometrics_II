@@ -1,0 +1,140 @@
+---
+title: "Econometrics II - Assignment 4"
+author: "Uncensored sloths"
+date: "30 Jan 2022"
+output:
+  pdf_document:
+    includes:
+      in_header: "preamble.tex"
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(fixest)
+library(car)
+```
+
+# Question 1
+
+a) Despite having exactly the same pre-treatment outcomes, it happens to be the case that parallel trends assumption is violated. How is this possible? Explain what it means for parallel trends assumption to be violated, and give an example of how it could be violated.
+
+parallel trend assumption: The selection bias should be constant over time (eta_t - eta_c)
+it is an identifying assumption so we cannot test for it
+
+Example: employment in brger restaurants - treatment is the minimum income - but we include taxes into the group specific effects (beforehand the same and after increase in Penselvenia)
+
+b) biased estimation (which direction depends on the change in eta) as part of the change in the eta is part of the estimation
+
+# Question 2 
+
+```{r}
+# Load data
+data <- read.csv("assignment5.csv")
+```
+
+a) 
+
+```{r}
+ex1 <- data[data$treated == 1,] %>%
+	group_by(year) %>%
+	      summarise(mean_year_treated = mean(lnm_rate))
+
+ex2 <- data[data$treated == 0,] %>%
+	group_by(year) %>%
+	      summarise(mean_year_untreated = mean(lnm_rate))
+
+means = merge(x=ex1,y=ex2,by="year")
+
+head(means)
+```
+```{r}
+plot(means$year, means$mean_year_treated,type="l",col="blue", ylim=c(-13,-7))
+points(means$year, means$mean_year_untreated,type="l",col="orange")
+
+```
+
+Generally, there seems to be a common downward trend which can be explained by advancement of treatment methods, diet and hygiene and is independent from the Sulfa drug. However, in 1937 you can see a substantial drop in mortality due to scarlet fever which stabilizes around 1942, increasing even a little bit (probably due to war and shortage in medicine).
+
+b) Using only data for the years 1936 and 1937, make a table with the mean log mortality rate
+for treated and control diseases before and after the introduction of sulfa drugs. Use the
+numbers from the table to calculate the difference-in-differences estimator.
+
+```{r}
+means[means$year == 1936 | means$year == 1937, ]
+```
+```{r}
+treated_dif <- means$mean_year_treated[means$year == 1937] - 
+               means$mean_year_treated[means$year == 1936]
+control_dif <- means$mean_year_untreated[means$year == 1937] - 
+               means$mean_year_untreated[means$year == 1936]
+did <- treated_dif - control_dif
+```
+
+c) Using only data for the years 1936 and 1937, estimate a difference-in-difference regression.
+Comment on your results.
+
+```{r}
+data$year_control <- ifelse(data$year == 1937, 1, 0)
+data$post <- ifelse(data$year >= 1937, 1, 0)
+data$D <- data$post*data$treated
+```
+
+```{r}
+m1 <- feols(lnm_rate ~ D | treated + year, data = subset(data, data$year == 1936| data$year == 1937),
+            se = 'standard')
+summary(m1)
+```
+d) Using all years, estimate a difference-in-difference regression. To do that, you need to create
+an indicator variable equal to 1 for the years 1937-1943 and equal to 0 for the years 1925-
+1936. What is the interpretation of the difference-in-differences coefficients? What do you
+conclude about the effect of sulfa drugs on mortality rates?
+
+```{r}
+m2 <- feols(lnm_rate ~ D | treated + year, data,
+            se = 'standard')
+summary(m2)
+```
+
+As it will be discussed later, we first assume that there is no clustering in sample and treatment.
+
+e) Estimate an event-study specification. Comment on your results.
+
+```{r}
+m3 <- feols(lnm_rate ~ treated*i(year, ref = 1936) | treated + year, data,
+ se = 'standard')
+summary(m3)
+```
+
+
+f) Argue at which level you need to cluster standard errors. Implement your suggested clusterrobust standard errors. Comment on your results.
+
+state level - as there is potential heterogeneity on state level - states with higher scarlet fever rate receive more treatment
+
+```{r}
+m1_clustered <- feols(lnm_rate ~ D | treated + year, data = subset(data, data$year == 1936| data$year == 1937),
+            cluster = 'state')
+summary(m1_clustered)
+```
+
+```{r}
+m2_clustered <- feols(lnm_rate ~ D | treated + year, data,
+            cluster = 'state')
+summary(m2_clustered)
+```
+
+```{r}
+m3_clustered <- feols(lnm_rate ~ treated*i(year, ref = 1936) | treated + year, data,
+ cluster = 'state')
+summary(m3_clustered)
+```
+
+year as we choose turbocolosis as a control based on the argumentation that at that point of time there was no medication against it - treatment level
+
+g) Do a test of whether the prior trends differ between the treated and control groups. What
+do you conclude?
+
+```{r}
+linearHypothesis(m3_clustered, c("treated:year::1925=0", "treated:year::1926=0", "treated:year::1927=0", "treated:year::1928=0", 
+                                  "treated:year::1929=0", "treated:year::1930=0", "treated:year::1931=0", "treated:year::1932=0", "treated:year::1933=0", "treated:year::1934=0", "treated:year::1935=0"))
+```
