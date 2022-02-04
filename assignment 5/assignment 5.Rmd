@@ -13,6 +13,7 @@ library(dplyr)
 library(ggplot2)
 library(fixest)
 library(car)
+library()
 ```
 
 # Question 1
@@ -24,7 +25,10 @@ it is an identifying assumption so we cannot test for it
 
 Example: employment in brger restaurants - treatment is the minimum income - but we include taxes into the group specific effects (beforehand the same and after increase in Penselvenia)
 
-b) biased estimation (which direction depends on the change in eta) as part of the change in the eta is part of the estimation
+b) What would be the main problem of applying the difference-in-difference estimator in this
+case? What would this depend on?
+
+biased estimation (which direction depends on the change in eta) as part of the change in the eta is part of the estimation
 
 # Question 2 
 
@@ -85,6 +89,15 @@ m1 <- feols(lnm_rate ~ D | treated + year, data = subset(data, data$year == 1936
             se = 'standard')
 summary(m1)
 ```
+our regression model is: add formula
+we create the variable D which is the interacition between treatment and the year 1937 so post
+we use usual standard errors as we have only two groups and two years
+the fixed effects we include is the treatment and the years. The years have to be included as fixed effects as with technological change, increasing diet and hygiene standards the mortality rates of both illnesses decrease which we can consider via years (alpha). 
+we also have to control for group specific effects which is why we include treatment as a fixed effect (eta).
+
+we have the same estimation as in the previous subquestion as one would hope. It's significant at $5\%$. 
+
+
 d) Using all years, estimate a difference-in-difference regression. To do that, you need to create
 an indicator variable equal to 1 for the years 1937-1943 and equal to 0 for the years 1925-
 1936. What is the interpretation of the difference-in-differences coefficients? What do you
@@ -95,6 +108,15 @@ m2 <- feols(lnm_rate ~ D | treated + year, data,
             se = 'standard')
 summary(m2)
 ```
+put model
+
+eta is group effect - constant over time - treatment
+alpha is estiamted for each year
+delta is sum of estimated deltas (for each year) with weights
+
+the weights could be negative! as there is the possibility that some states (especially the ones that have a worse infrastructure) received the actual treatment later (the medicine) - it also could be that they first started with some specific states and then continued on later with the other states - in this case $\alpha_t$ is not able to approximate the time trend well in the treatment period
+
+the estimation should not be ATET as we estimate the treatment effect over longer period including several years where the drug was not available yet and several years after the introduction of the drug, 
 
 As it will be discussed later, we first assume that there is no clustering in sample and treatment.
 
@@ -106,17 +128,27 @@ m3 <- feols(lnm_rate ~ treated*i(year, ref = 1936) | treated + year, data,
 summary(m3)
 ```
 
+```{r}
+plot(m3$coefficients, type='l')
+```
+before 1937, the treatment effect is approximately stable around $-0.2$. Except for 1929, no estimation is significant at $5\%$ or lower before 1937, so we can conclude that this significance is within our expectations. after 1937 we see an increaisng treatment effect over the years until 1942. The estimation in 1937 corresponds to our previous estimations. After 1942, the treatment effect decreases, which might be due to the war - less medicine - more death.
+
+The F test shows no joint significance, so we can assume common time trends.
+```{r}
+linearHypothesis(m3, c("treated:year::1925=0", "treated:year::1926=0", "treated:year::1927=0", "treated:year::1928=0", 
+                                  "treated:year::1929=0", "treated:year::1930=0", "treated:year::1931=0", "treated:year::1932=0", "treated:year::1933=0", "treated:year::1934=0", "treated:year::1935=0"))
+```
 
 f) Argue at which level you need to cluster standard errors. Implement your suggested clusterrobust standard errors. Comment on your results.
 
-state level - as there is potential heterogeneity on state level - states with higher scarlet fever rate receive more treatment
+state level as there is the possibility that there is a heterogeneity in treatment especially the treatment intensity. Some states might have had worse access to the drug due to infrastructure (states within the country). Further, there might be states that had a lower ontake of the drug, f.e. the bible belt that is traditionally refusing medical treatment because religious beliefs. Nikki schreibt noch was.
 
 ```{r}
 m1_clustered <- feols(lnm_rate ~ D | treated + year, data = subset(data, data$year == 1936| data$year == 1937),
             cluster = 'state')
 summary(m1_clustered)
 ```
-
+in our first model, the standard errors decrease in comparison to the previous estimation which is why the significance level increases to $0.01\%$. The same can be observed for the other observations. Our main results are robust are against clustering. However, the results of our prior trend analysis change as more years become significant. However, we will discuss this in the next subquestion. warum gehen sie runter? Anna Buch
 ```{r}
 m2_clustered <- feols(lnm_rate ~ D | treated + year, data,
             cluster = 'state')
@@ -138,3 +170,4 @@ do you conclude?
 linearHypothesis(m3_clustered, c("treated:year::1925=0", "treated:year::1926=0", "treated:year::1927=0", "treated:year::1928=0", 
                                   "treated:year::1929=0", "treated:year::1930=0", "treated:year::1931=0", "treated:year::1932=0", "treated:year::1933=0", "treated:year::1934=0", "treated:year::1935=0"))
 ```
+Now, the estimation for the years before treatment are jointly signicant indicating violations of common trends. However, with prior trends we are less concerned with significance than with the size of the estimations. In comparison to the treated years, the estimations for the pre treatment years aree substantially slower. However, this might be due to the reasons we already mentioned before. Maybe the advancements in treatments are also correlated with time so the development can be observed already before 1937 (which would not go against the results that there is a significant treatment effect of the drug). Further, the effect in 1937 is probably so close to some previous years as this was the first year of introduction of the drug. Hence, the uptake was probably lower than in subsequent years. This would align with our estimations as after 1938, the treatment effects increase considerably. 
