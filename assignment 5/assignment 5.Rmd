@@ -1,7 +1,7 @@
 ---
-title: "Econometrics II - Assignment 4"
+title: "Econometrics II - Assignment 5"
 author: "Uncensored sloths"
-date: "30 Jan 2022"
+date: "06 Feb 2022"
 output:
   pdf_document:
     includes:
@@ -18,17 +18,27 @@ library()
 
 # Question 1
 
-a) Despite having exactly the same pre-treatment outcomes, it happens to be the case that parallel trends assumption is violated. How is this possible? Explain what it means for parallel trends assumption to be violated, and give an example of how it could be violated.
+i) Despite having exactly the same pre-treatment outcomes, it happens to be the case that parallel trends assumption is violated. How is this possible? Explain what it means for parallel trends assumption to be violated, and give an example of how it could be violated.
 
-parallel trend assumption: The selection bias should be constant over time (eta_t - eta_c)
-it is an identifying assumption so we cannot test for it
+According to the parallel trend assumption the selection bias needs to be constant over time. It is an identifying assumption and therefore, we cannot test for it. The assumption is violated when one of the group specific effects ($\eta_T, \eta_C$) or both change over time and therefore the selection bias ($\eta_T - \eta_C$) increases or decrease over time. 
 
-Example: employment in brger restaurants - treatment is the minimum income - but we include taxes into the group specific effects (beforehand the same and after increase in Penselvenia)
+Sticking to the example of the increase in employment in burger restaurants after an increase in minimum income in New Jersey, a possible violation of the parallel trend assumption could be an introduction of a fast food tax or the increase in corporate taxes in one of the states. Taxes impact employment but they are not the focus of the research question and thus not used as a treatment. Rather, we would include them as group fixed effects and the difference of the taxes between the states would be the selection bias. If Pennsylvania would now introduce a fast food tax or increases corporate taxes (while New Jersey does not change anything), employment could decrease in burger restaurants in Pennsylvania. 
 
-b) What would be the main problem of applying the difference-in-difference estimator in this
+
+ii) What would be the main problem of applying the difference-in-difference estimator in this
 case? What would this depend on?
 
-biased estimation (which direction depends on the change in eta) as part of the change in the eta is part of the estimation
+If the selection bias would not be constant over time, our estimation of the treatment effect would be biased. Consider the previous example used in a) and assume that there is a change in taxation in Pennsylvania in the second period. Then our treatment effect would correspond to (note that Pennsylvania is the control group):
+$$
+(E[Y_{T1}] - E[Y_{C1}]) - (E[Y_{T0}]-E[Y_{C0}])
+$$
+$$
+= [(\alpha_1 + \delta + \eta_T) - (\alpha_1 + \eta_{C1})] - [(\alpha_0 + \eta_T) - (\alpha_0 + \eta_{C0})]
+$$
+$$
+=\delta - (\eta_{C1} - \eta_{C0}) \neq \delta
+$$
+The selection bias is not constant over time if the group specific effects change over time. However, if both group specific effects of the control and treatment group change in the same direction and the same degree, the selection bias would stay constant. Therefore, the parallel trend assumption does not hold when the change in the group specific effects is different in one of the groups. Whether the bias has a downward or upward effect on our estimation, depends on the specific change.
 
 # Question 2 
 
@@ -37,7 +47,7 @@ biased estimation (which direction depends on the change in eta) as part of the 
 data <- read.csv("assignment5.csv")
 ```
 
-a) 
+i)  Plot unconditional means of log mortality rates by the type of disease for all years. Comment on your graph.
 
 ```{r}
 ex1 <- data[data$treated == 1,] %>%
@@ -57,10 +67,11 @@ plot(means$year, means$mean_year_treated,type="l",col="blue", ylim=c(-13,-7))
 points(means$year, means$mean_year_untreated,type="l",col="orange")
 
 ```
+Generally, there seems to be a common downward trend which can be explained by advancements in treatment methods, dietary and hygienic standards which is independent from the development of the Sulfa drug. However, in 1937, one can see a substantial drop in mortality due to scarlet fever which stabilizes around 1942. At the same time the Sulfa drug was introduced and widely dispensed in the United States. Hence, this is first indication that the Sulfa drug indeed has an improving effect. 
 
-Generally, there seems to be a common downward trend which can be explained by advancement of treatment methods, diet and hygiene and is independent from the Sulfa drug. However, in 1937 you can see a substantial drop in mortality due to scarlet fever which stabilizes around 1942, increasing even a little bit (probably due to war and shortage in medicine).
+Afterwards, the mortality due to scarlet fever increases slightly which could be due to the war and the shortage in medicine caused by production shortages. Moreover, most resources a lot of the resources were used for the war and were not fully available for civilians as a result.
 
-b) Using only data for the years 1936 and 1937, make a table with the mean log mortality rate
+ii) Using only data for the years 1936 and 1937, make a table with the mean log mortality rate
 for treated and control diseases before and after the introduction of sulfa drugs. Use the
 numbers from the table to calculate the difference-in-differences estimator.
 
@@ -73,10 +84,19 @@ treated_dif <- means$mean_year_treated[means$year == 1937] -
 control_dif <- means$mean_year_untreated[means$year == 1937] - 
                means$mean_year_untreated[means$year == 1936]
 did <- treated_dif - control_dif
+did
 ```
+We use the numbers from the table to calculate the difference between the treatment group in 1937 and 1936 and the control group in 1937 and 1936. Finally, we take the difference between the estimated differences and get a treatment effect of approximately $-0.439$. To avoid repetition the interpretation of this estimated effect is explained below.
 
-c) Using only data for the years 1936 and 1937, estimate a difference-in-difference regression.
-Comment on your results.
+iii) Using only data for the years 1936 and 1937, estimate a difference-in-difference regression. Comment on your results.
+
+The difference-in-difference estimation in a panel regression framework reads as follows, where $Y$ is the mortality rate of disease $g=C,T$ (where $C$ corresponds to the control disease tuberculosis and $T$ to the treated disease scarlet fever) in state $i=1,\dots,48$ in year $t=1936,1937$, $D_{gt}$ is a dummy variable that equals one for all (treated) scarlet fever mortality rates in 1937 and $U_{git}$ are error terms. The coefficients $\alpha_t$ and $\eta_g$ are fixed effects on the year and treatment level respectively, while $\delta$ is the difference-in-difference estimator.
+
+$$
+Y_{git}=\alpha_t+\eta_g+\delta D_{gt}+U_{git}\\
+D=\begin{cases} 1 \qquad \text{if} \quad g=T \quad \& \quad t=1937 \\0 \qquad \text{otherwise} \end{cases}
+$$
+It intuitively makes sense to include fixed effects for years and treatment belonging to obtain the difference-in difference estimator via a panel regression since thus the common trend assumption ($\alpha_t=\alpha_{gt}, \forall g$) and fixed selection bias assumption ($(\eta_C-\eta_T)=(\eta_{Ct}-\eta_{Tt}),\forall t$) are imposed. 
 
 ```{r}
 data$year_control <- ifelse(data$year == 1937, 1, 0)
@@ -89,38 +109,52 @@ m1 <- feols(lnm_rate ~ D | treated + year, data = subset(data, data$year == 1936
             se = 'standard')
 summary(m1)
 ```
-our regression model is: add formula
-we create the variable D which is the interacition between treatment and the year 1937 so post
-we use usual standard errors as we have only two groups and two years
-the fixed effects we include is the treatment and the years. The years have to be included as fixed effects as with technological change, increasing diet and hygiene standards the mortality rates of both illnesses decrease which we can consider via years (alpha). 
-we also have to control for group specific effects which is why we include treatment as a fixed effect (eta).
 
-we have the same estimation as in the previous subquestion as one would hope. It's significant at $5\%$. 
+In the estimation of the regression model non-clustered standard errors are reported since the issue of clustering is left to the discussion in (vi). As one would hope, the the estimation identifies the same difference-in-difference estimator as obtained manually above. Moreover, we the estimation as a panel regression allows us to conclude that the identified effect is significant at the $5\%$ significance level. Hence, the introduction of sulfa drugs reduced the mortality rate of scarlet fever by $1-e^{-0.439008}\approx35.55\%$ between 1936 and 1937 on average across all 48 considered states. Hence, the difference-in-difference estimator can be interpreted as the average (here: average across states) treatment effect on the treated (here: on the scarlet fever disease) (ATET)  if we consider only two time periods.
 
+It is reasonable to assume that there is some significant heterogeneity in mortality rates across states due to heterogeneity in the quality of the local health care system etc. (Testing for this assumption is omitted here for sake of conciseness.) Therefore, the precision of the estimation could be improved by adding fixed effects across states (which is equivalent to including state as a regressor) which could catch some noise captured by the error terms in the specification above:
 
-d) Using all years, estimate a difference-in-difference regression. To do that, you need to create
-an indicator variable equal to 1 for the years 1937-1943 and equal to 0 for the years 1925-
-1936. What is the interpretation of the difference-in-differences coefficients? What do you
-conclude about the effect of sulfa drugs on mortality rates?
+$$
+Y_{git}=\alpha_t+\eta_g+\eta_i+\delta D_{gt}+U_{git}\\
+D_{gt}=\begin{cases} 1 \qquad \text{if} \quad g=T \quad \& \quad t=1937 \\0 \qquad \text{otherwise} \end{cases}
+$$
+```{r}
+m1b <- feols(lnm_rate ~ D | treated + year + state, data = subset(data, data$year == 1936| data$year == 1937),
+            se = 'standard')
+summary(m1b)
+```
+As we anticipated, the precision of the estimation is improved by including state-level fixed effects. In the following questions we continue with the form model specification (i.e. without fixed effects) and only turn to the latter in (vi) since it offers an interesting case for the considertion of clustering of standard errors. Of course, all conducted analyses could be easily replicated for the latter specification.
+
+iv) Using all years, estimate a difference-in-difference regression. To do that, you need to create an indicator variable equal to 1 for the years 1937-1943 and equal to 0 for the years 1925-1936. What is the interpretation of the difference-in-differences coefficients? What do you conclude about the effect of sulfa drugs on mortality rates?
+
+The difference-in-difference regression model for all years $t=1927,1928,\dots,1943$ still reads as follows above, but now for all years $t=1925,\dots,1943$ such that $D_{gt}$ equals one for all (treated) scarlet fever mortality rates in years 1937-1943:
+
+$$
+Y_{git}=\alpha_t+\eta_g+\delta D_{gt}+U_{git}\\
+D_{gt}=\begin{cases} 1 \qquad \text{if} \quad g=T \quad \& \quad t\geq1937 \\0 \qquad \text{otherwise} \end{cases}
+$$
+As above, the estimation of the model is performed using unclustered standard errors.
 
 ```{r}
 m2 <- feols(lnm_rate ~ D | treated + year, data,
             se = 'standard')
 summary(m2)
 ```
-put model
+Before moving on to the interpretation of the difference-in-differences estimator $\delta$, we briefly discuss the interpretation of the other difference-in-differences coefficients, namely $\alpha_t$ and $\eta_g$, whose estimations are not printed above for the reader's sake. The 16 time-fixed effect coefficients $\alpha_t$ are estimated for each year and capture the common time trend assumed to be followed by both mortality rates (hence $\alph_t$ is independent from $g$). The 2 disease-fixed effect coefficients $\eta_g$ are estimated for each disease and capture the a priori heterogeneity in mortality rates across diseases such that their difference $\hat{\eta}_C - \hat{\eta}_T$ estimates the selection bias in mortality rates due to the fact that the to diseases differ in mortality even before the medical intervention studied here. Similarly, the 48 coefficients $\eta_i$ capture the a priori heterogeneity in mortality rates across states. The interpretation is most intuitive when considering the sum $\alpha_t + \eta_c (+\eta_i)$ and assuming that $D_{gt}=0, \forall t\geq1937$ such that it gives an estimate for the counterfactual development of mortality rates of scarlet fever in year $t$ (and state $i$) if the sulfa drugs would not have been introduced.
 
-eta is group effect - constant over time - treatment
-alpha is estiamted for each year
-delta is sum of estimated deltas (for each year) with weights
+The interpretation of the estimated difference-in-differences estimator $\delta$ is generally not equivalent to the one given above for the case of 2 time periods, where it corresponds to that of the ATET. Since more time (post-treatment) time periods are considered here, this equivalence would only hold if we were to assume a constant treatment effect $\delta$. However, since the estimated coefficients differ substantially between the two estimations, this assumption seems to be unreasonable. Therefore, the estimate should be interpreted as a weighted average treatment effect $\Sigma_{i,t}w_{it}\delta_{it}$ over years and states. Hence, the introduction of sulfa drugs on average across all 48 considered states led to a decrease of the mortality rate of scarlet fever by $1-e^{-0.866724}\approx57.97\%$ on average between 1937 and 1943.
 
-the weights could be negative! as there is the possibility that some states (especially the ones that have a worse infrastructure) received the actual treatment later (the medicine) - it also could be that they first started with some specific states and then continued on later with the other states - in this case $\alpha_t$ is not able to approximate the time trend well in the treatment period
+One should note that by the work of De Chaisemartin & d'Haultfoeuille (2020) it is possible that for some states $i$ and years $t$ these weights $w_{it}$ might be negative since it seems plausible to assume that some states with worse medical infrastructure received sulfa drugs and thus the treatment later than others with higher-quality health care systems. Moreover, it is possible that the drug was first introduced in some state and then rolled out later in further states such that the coefficients $\alpha_t$ are unable to approximate the time trend well in the treatment period.
 
-the estimation should not be ATET as we estimate the treatment effect over longer period including several years where the drug was not available yet and several years after the introduction of the drug, 
+v) Estimate an event-study specification. Comment on your results.
 
-As it will be discussed later, we first assume that there is no clustering in sample and treatment.
+The event-specification reads as follows, where $\tau=1937, \forall i$ (thus it is now assumed that the moment of the intervention is equal for all states) and $D_{gt}=D_{g},\forall t$ equals one for all (treated) scarlet fever mortality rates in all years such that treatment effects for specific years are also estimated for years before the intervention (i.e. when $t-\tau<0$) to allow for subsequent prior trend testing- Furthermore, we impose the customary normalization that $\delta_{-1}=0$, such that all treatment effect coefficients can be interpreted in relative magnitude to the year of intervention.
 
-e) Estimate an event-study specification. Comment on your results.
+$$
+Y_{git}=\alpha_t+\eta_g+\delta_{t-\tau} D_{g}+U_{git}\\
+D_{g}=\begin{cases} 1 \qquad \text{if} \quad g=T \quad \& \quad t\geq1937 \\0 \qquad \text{otherwise} \end{cases}
+$$
+As above, unclustered standard errors are reported and coefficients are plotted over years for ease of representation.
 
 ```{r}
 m3 <- feols(lnm_rate ~ treated*i(year, ref = 1936) | treated + year, data,
@@ -129,26 +163,28 @@ summary(m3)
 ```
 
 ```{r}
-plot(m3$coefficients, type='l')
+plot(means$year[-12], m3$coefficients, type='l',ylab="estimated treatment effect",xlab="year")
 ```
-before 1937, the treatment effect is approximately stable around $-0.2$. Except for 1929, no estimation is significant at $5\%$ or lower before 1937, so we can conclude that this significance is within our expectations. after 1937 we see an increaisng treatment effect over the years until 1942. The estimation in 1937 corresponds to our previous estimations. After 1942, the treatment effect decreases, which might be due to the war - less medicine - more death.
-
-The F test shows no joint significance, so we can assume common time trends.
+As displayed above, the treatment effect before the intervention is approximately stable around $-0.2$. Except for 1929, no estimation is significant at $5\%$ or lower before 1937.
 ```{r}
 linearHypothesis(m3, c("treated:year::1925=0", "treated:year::1926=0", "treated:year::1927=0", "treated:year::1928=0", 
                                   "treated:year::1929=0", "treated:year::1930=0", "treated:year::1931=0", "treated:year::1932=0", "treated:year::1933=0", "treated:year::1934=0", "treated:year::1935=0"))
 ```
 
-f) Argue at which level you need to cluster standard errors. Implement your suggested clusterrobust standard errors. Comment on your results.
+The F test shows no joint significance, so we can assume common prior trends. While this does not mean that parallel trends hold, these results can be seen as suggestive towards the common trend assumption necessary for difference-in-differences estimation.
 
-state level as there is the possibility that there is a heterogeneity in treatment especially the treatment intensity. Some states might have had worse access to the drug due to infrastructure (states within the country). Further, there might be states that had a lower ontake of the drug, f.e. the bible belt that is traditionally refusing medical treatment because religious beliefs. Nikki schreibt noch was.
+After the medical intervention in 1937, we see a treatment effect increasing in magnitude (i.e. more negative) over the years until 1942, with almost all coefficients significant even at the 0.1$\%$ confidence level. This is broadly in line with expectations as the roll-out of innovative medicine likely evolves over the course of several years and only coverges after multiple years. Furthermore, the estimation in 1937 corresponds to our previous estimations validating the results obtained above. After 1942, the treatment effect decreases in magnitude, which might be due to the U.S. entering the WW2 such that sulfa drugs supplies to the military were reduced thus lowering the treatment intensity within U.S. states and increasing respective mortality rates for scarlet fever.
+
+vi) Argue at which level you need to cluster standard errors. Implement your suggested cluster-robust standard errors. Comment on your results.
+
+Follwoing the work of Abadie et al. (2017) clustering should be viewed as a design problem and necessitates that either the sampling process or the treatment assignment is clustered. Due to lack of respective information we disregard the former and only further discuss likely clustering in the treatment assignment mechanism. Such clustering is present if the assignment is correlated within clusters, but less so across clusters (Abadie et al., 2017). For the treatment assignment mechanism at hand, i.e. the distribution of sulfa drugs, this is likely the case for the state-level: the treatment intensity, i.e. sulfa drug adoption rate, is likely heterogeneous across states due to differences in the quality of the local health care system (or due to religous beliefs between member states and non-member states of the American bible belt) and likely correlated across time within states, i.e. across observations within the suggested cluster. Therefore, all three models (without state-fixed effects) are estimated again with cluster-robust standard errors.
 
 ```{r}
 m1_clustered <- feols(lnm_rate ~ D | treated + year, data = subset(data, data$year == 1936| data$year == 1937),
             cluster = 'state')
 summary(m1_clustered)
 ```
-in our first model, the standard errors decrease in comparison to the previous estimation which is why the significance level increases to $0.01\%$. The same can be observed for the other observations. Our main results are robust are against clustering. However, the results of our prior trend analysis change as more years become significant. However, we will discuss this in the next subquestion. warum gehen sie runter? Anna Buch
+
 ```{r}
 m2_clustered <- feols(lnm_rate ~ D | treated + year, data,
             cluster = 'state')
@@ -161,13 +197,38 @@ m3_clustered <- feols(lnm_rate ~ treated*i(year, ref = 1936) | treated + year, d
 summary(m3_clustered)
 ```
 
-year as we choose turbocolosis as a control based on the argumentation that at that point of time there was no medication against it - treatment level
+In the first model, the standard errors decrease in comparison to the previous estimation which is why the significance level at which the identified treatment effect is significant increases to $0.01\%$. Essentially the same holds for the other estimations. Hence, our main result of the signficant treatment effect of suilfa drugs on the mortality of scarlet fever is robust against clustering adjustment. However, the results of the prior trend analysis conducted above change as more pre-trend coefficients become significant. A more detailed analysis of this issue is left to subquestion (vii).
 
-g) Do a test of whether the prior trends differ between the treated and control groups. What
+If one were to include state-fixed effects in the difference-in-differences regressions, heterogeneity in the treatment effect is required for clustering adjustment to be necessary because one includes fixed effects at the level of the relevant clusters (Abadie et al., 2017). To non-formally test for this heterogeneity, we interact $D_{gt}$ with states in the model specification of question (iv) and test for the joint significance of the respective coefficients:
+```{r}
+m_states <- feols(lnm_rate ~ D + D*state | state + treated + year, data = data, se = 'standard')
+summary(m_states)
+```
+
+```{r}
+linearHypothesis(m_states, c("D:stateArizona=0","D:stateArkansas=0","D:stateCalifornia=0","D:stateColorado=0","D:stateConnecticut=0","D:stateDelaware=0","D:stateFlorida=0","D:stateGeorgia=0","D:stateIdaho=0","D:stateIllinois=0","D:stateIndiana=0","D:stateIowa=0","D:stateKansas=0","D:stateKentucky=0","D:stateLouisiana=0","D:stateMaine=0","D:stateMaryland=0","D:stateMassachusetts=0","D:stateMichigan=0","D:stateMinnesota=0","D:stateMississippi=0","D:stateMissouri=0","D:stateMontana=0","D:stateNebraska=0","D:stateNevada=0","D:stateNew Hampshire=0","D:stateNew Jersey=0","D:stateNew Mexico=0","D:stateNew York=0","D:stateNorth Carolina=0","D:stateNorth Dakota=0","D:stateOhio=0","D:stateOklahoma=0","D:stateOregon=0","D:statePennsylvania=0","D:stateRhode Island=0","D:stateSouth Carolina=0","D:stateSouth Dakota=0","D:stateTennessee=0","D:stateTexas=0","D:stateUtah=0","D:stateVermont=0","D:stateVirginia=0","D:stateWashington=0","D:stateWest Virginia=0","D:stateWisconsin=0","D:stateWyoming=0"))
+```
+Based on the F-test reported above the interaction-coefficients are jointly significanr such that we find evidence for heterogeneous treatment effects here. In this case Abadie et al. (2017) suggest that a clustering adjustment is also necessary, if one were to include fixed effects at the level of the state-cluster in the regression specification. The analysis adopted here is, however, of rather superficial nature such that more rigirous testing of heterogeneity in treatment effects would be necessary at this point.
+
+vii) Do a test of whether the prior trends differ between the treated and control groups. What
 do you conclude?
+
+To test whether the prior trends differ between the treated and control groups, we run a F-test of the joint significant of all pre-trend coefficients estimated by the model specified in (v) with clustered standard erros, i.e. $\hat{\delta}_{t-\tau}$ for which $t-\tau<-1$:
 
 ```{r}
 linearHypothesis(m3_clustered, c("treated:year::1925=0", "treated:year::1926=0", "treated:year::1927=0", "treated:year::1928=0", 
                                   "treated:year::1929=0", "treated:year::1930=0", "treated:year::1931=0", "treated:year::1932=0", "treated:year::1933=0", "treated:year::1934=0", "treated:year::1935=0"))
 ```
-Now, the estimation for the years before treatment are jointly signicant indicating violations of common trends. However, with prior trends we are less concerned with significance than with the size of the estimations. In comparison to the treated years, the estimations for the pre treatment years aree substantially slower. However, this might be due to the reasons we already mentioned before. Maybe the advancements in treatments are also correlated with time so the development can be observed already before 1937 (which would not go against the results that there is a significant treatment effect of the drug). Further, the effect in 1937 is probably so close to some previous years as this was the first year of introduction of the drug. Hence, the uptake was probably lower than in subsequent years. This would align with our estimations as after 1938, the treatment effects increase considerably. 
+After adjusting the standard errors for clustering, the estimated prior trend coefficients, i.e. treatment effect coefficients before the intervention, are jointly significant indicating violations of common prior trends. However, with prior trends we are less concerned with significance than with the size of the estimations. After all, in comparison to the treatment effect during treated years, the estimations for the pre-treatment years are substantially lower. 
+
+Moreover, it does not seem completely unlikely that the introduction of sulfa drugs has been timely correlated with preceding advancements in medication of diseases which can also be medicated with sulfa drugs. If this were the case, one would not be surprised pre-treatment treatment effect coefficients shortly before the actual intervention to be significant.
+
+Furthermore, equal prior trends do not necessarily imply that parallel trends over the treatment period hold, and one might as well argue (e.g. based on additional data) that the development of mortality rates across diseases converged overall within the considered treatment period.
+
+# References
+
+Abadie, A., Athey, S., Imbens, G. W., & Wooldridge, J. (2017). When should you adjust standard errors for clustering? (No. w24003). National Bureau of Economic Research.
+
+De Chaisemartin, C., & d'Haultfoeuille, X. (2020). Two-way fixed effects estimators with heterogeneous treatment effects. American Economic Review, 110(9), 2964-96.
+
+Ozsoy, S. M., Rasteh, M., & Yönder, E. (2020). Understanding drought shocks: Bank financial stability and loan performance. Working Paper.
