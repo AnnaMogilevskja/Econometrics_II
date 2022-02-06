@@ -105,8 +105,8 @@ data$D <- data$post*data$treated
 ```
 
 ```{r}
-m1 <- feols(lnm_rate ~ D | treated + year, data = subset(data, data$year == 1936| data$year == 1937),
-            se = 'standard')
+m1 <- feols(lnm_rate ~ D | treated + year, data = subset(data, 
+            data$year == 1936| data$year == 1937), se = 'standard')
 summary(m1)
 ```
 
@@ -119,8 +119,8 @@ Y_{git}=\alpha_t+\eta_g+\eta_i+\delta D_{gt}+U_{git}\\
 D_{gt}=\begin{cases} 1 \qquad \text{if} \quad g=T \quad \& \quad t=1937 \\0 \qquad \text{otherwise} \end{cases}
 $$
 ```{r}
-m1b <- feols(lnm_rate ~ D | treated + year + state, data = subset(data, data$year == 1936| data$year == 1937),
-            se = 'standard')
+m1b <- feols(lnm_rate ~ D | treated + year + state, data = subset(data, 
+            data$year == 1936| data$year == 1937), se = 'standard')
 summary(m1b)
 ```
 As we anticipated, the precision of the estimation is improved by including state-level fixed effects. In the following questions we continue with the form model specification (i.e. without fixed effects) and only turn to the latter in (vi) since it offers an interesting case for the considertion of clustering of standard errors. Of course, all conducted analyses could be easily replicated for the latter specification.
@@ -140,7 +140,7 @@ m2 <- feols(lnm_rate ~ D | treated + year, data,
             se = 'standard')
 summary(m2)
 ```
-Before moving on to the interpretation of the difference-in-differences estimator $\delta$, we briefly discuss the interpretation of the other difference-in-differences coefficients, namely $\alpha_t$ and $\eta_g$, whose estimations are not printed above for the reader's sake. The 16 time-fixed effect coefficients $\alpha_t$ are estimated for each year and capture the common time trend assumed to be followed by both mortality rates (hence $\alph_t$ is independent from $g$). The 2 disease-fixed effect coefficients $\eta_g$ are estimated for each disease and capture the a priori heterogeneity in mortality rates across diseases such that their difference $\hat{\eta}_C - \hat{\eta}_T$ estimates the selection bias in mortality rates due to the fact that the to diseases differ in mortality even before the medical intervention studied here. Similarly, the 48 coefficients $\eta_i$ capture the a priori heterogeneity in mortality rates across states. The interpretation is most intuitive when considering the sum $\alpha_t + \eta_c (+\eta_i)$ and assuming that $D_{gt}=0, \forall t\geq1937$ such that it gives an estimate for the counterfactual development of mortality rates of scarlet fever in year $t$ (and state $i$) if the sulfa drugs would not have been introduced.
+Before moving on to the interpretation of the difference-in-differences estimator $\delta$, we briefly discuss the interpretation of the other difference-in-differences coefficients, namely $\alpha_t$ and $\eta_g$, whose estimations are not printed above for the reader's sake. The 16 time-fixed effect coefficients $\alpha_t$ are estimated for each year and capture the common time trend assumed to be followed by both mortality rates (hence $\alpha_t$ is independent from $g$). The 2 disease-fixed effect coefficients $\eta_g$ are estimated for each disease and capture the a priori heterogeneity in mortality rates across diseases such that their difference $\hat{\eta}_C - \hat{\eta}_T$ estimates the selection bias in mortality rates due to the fact that the to diseases differ in mortality even before the medical intervention studied here. Similarly, the 48 coefficients $\eta_i$ capture the a priori heterogeneity in mortality rates across states. The interpretation is most intuitive when considering the sum $\alpha_t + \eta_c (+\eta_i)$ and assuming that $D_{gt}=0, \forall t\geq1937$ such that it gives an estimate for the counterfactual development of mortality rates of scarlet fever in year $t$ (and state $i$) if the sulfa drugs would not have been introduced.
 
 The interpretation of the estimated difference-in-differences estimator $\delta$ is generally not equivalent to the one given above for the case of 2 time periods, where it corresponds to that of the ATET. Since more time (post-treatment) time periods are considered here, this equivalence would only hold if we were to assume a constant treatment effect $\delta$. However, since the estimated coefficients differ substantially between the two estimations, this assumption seems to be unreasonable. Therefore, the estimate should be interpreted as a weighted average treatment effect $\Sigma_{i,t}w_{it}\delta_{it}$ over years and states. Hence, the introduction of sulfa drugs on average across all 48 considered states led to a decrease of the mortality rate of scarlet fever by $1-e^{-0.866724}\approx57.97\%$ on average between 1937 and 1943.
 
@@ -163,12 +163,16 @@ summary(m3)
 ```
 
 ```{r}
-plot(means$year[-12], m3$coefficients, type='l',ylab="estimated treatment effect",xlab="year")
+plot(means$year[-12], m3$coefficients,ylab="estimated treatment effect",xlab="year")
 ```
 As displayed above, the treatment effect before the intervention is approximately stable around $-0.2$. Except for 1929, no estimation is significant at $5\%$ or lower before 1937.
 ```{r}
-linearHypothesis(m3, c("treated:year::1925=0", "treated:year::1926=0", "treated:year::1927=0", "treated:year::1928=0", 
-                                  "treated:year::1929=0", "treated:year::1930=0", "treated:year::1931=0", "treated:year::1932=0", "treated:year::1933=0", "treated:year::1934=0", "treated:year::1935=0"))
+linearHypothesis(m3, c("treated:year::1925=0", "treated:year::1926=0", 
+                       "treated:year::1927=0", "treated:year::1928=0", 
+                       "treated:year::1929=0", "treated:year::1930=0", 
+                       "treated:year::1931=0", "treated:year::1932=0", 
+                       "treated:year::1933=0", "treated:year::1934=0", 
+                       "treated:year::1935=0"))
 ```
 
 The F test shows no joint significance, so we can assume common prior trends. While this does not mean that parallel trends hold, these results can be seen as suggestive towards the common trend assumption necessary for difference-in-differences estimation.
@@ -216,8 +220,12 @@ do you conclude?
 To test whether the prior trends differ between the treated and control groups, we run a F-test of the joint significant of all pre-trend coefficients estimated by the model specified in (v) with clustered standard erros, i.e. $\hat{\delta}_{t-\tau}$ for which $t-\tau<-1$:
 
 ```{r}
-linearHypothesis(m3_clustered, c("treated:year::1925=0", "treated:year::1926=0", "treated:year::1927=0", "treated:year::1928=0", 
-                                  "treated:year::1929=0", "treated:year::1930=0", "treated:year::1931=0", "treated:year::1932=0", "treated:year::1933=0", "treated:year::1934=0", "treated:year::1935=0"))
+linearHypothesis(m3_clustered, c("treated:year::1925=0", "treated:year::1926=0", 
+                                 "treated:year::1927=0", "treated:year::1928=0", 
+                                  "treated:year::1929=0", "treated:year::1930=0", 
+                                 "treated:year::1931=0", "treated:year::1932=0", 
+                                 "treated:year::1933=0", "treated:year::1934=0", 
+                                 "treated:year::1935=0"))
 ```
 After adjusting the standard errors for clustering, the estimated prior trend coefficients, i.e. treatment effect coefficients before the intervention, are jointly significant indicating violations of common prior trends. However, with prior trends we are less concerned with significance than with the size of the estimations. After all, in comparison to the treatment effect during treated years, the estimations for the pre-treatment years are substantially lower. 
 
@@ -231,4 +239,3 @@ Abadie, A., Athey, S., Imbens, G. W., & Wooldridge, J. (2017). When should you a
 
 De Chaisemartin, C., & d'Haultfoeuille, X. (2020). Two-way fixed effects estimators with heterogeneous treatment effects. American Economic Review, 110(9), 2964-96.
 
-Ozsoy, S. M., Rasteh, M., & Yönder, E. (2020). Understanding drought shocks: Bank financial stability and loan performance. Working Paper.
